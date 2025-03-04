@@ -1,24 +1,27 @@
 #' Download and create climate raster files
 #'
 #' This function downloads climate raster files from Zenodo online repository
+#' Raster files are of all of the United Kingdom in British National Grid (EPSG:27700) or Northern Ireland in Irish Grid (EPSG:29903)
+#' Output rasters are in line with grid of chosen region
 #' Files are originally monthly but users can choose for output rasters to be monthly, seasonal or annual with custom date range
 #' Seasonal and annual rasters can be created using min, max, mean or sum
-#' Included variables are rain 'rain', average temperature 'tas', minumum temperature 'tasmin' and maximum temperature 'tasmax'
+#' Included variables are rain 'rain', average temperature 'tas', minimum temperature 'tasmin' and maximum temperature 'tasmax'
 #' Rain is measured in (mm) and all temperatures are measured in degrees Celcius
+#' @import terra
 
+# get climate data by region, variable and date range
+#
+# Arguments:
+#' @param   reg   - Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid
+#' @param  cv    - Climate variable as a string: 'tas', 'tasmax', 'tasmin', or 'rain'
+#' @param  start - Start date for output raster. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. Start must be before end.
+#' @param  end   - End date for output raster. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. End must be later than start.
+#' @param  time  - String of chosen time aggregate for output raster. Can be ‘monthly’, ‘seasonal’ and ‘annual’. The default is 'monthly.' If choosing ‘monthly’, each layer will be a month between start and end inclusive. If choosing ‘seasonal’, layers will be created for all complete seasons between start and end. Seasons are standardised as follows: Winter = December, January, February, Spring = March, April, May, Summer = June, July, August, Autumn = September, October, November. There are warnings for any incomplete seasons. If choosing ‘annual’, layers are created from the start date, for example, if start = ‘2012_04’, each annual layer will be calculated from April each year. There are warnings for incomplete years.
+#' @param  agg   - Aggregation function when choosing seasonal or annual time. Can be 'mean', 'min', 'max' or 'sum.' Not required for time = 'monthly'.
+# Returns:
+#' @return  A subset raster of the selected climate variable, time parameter and date range at 1km resolution
 fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg = 0) {
-  # get climate data by region, variable and date range
-  #
-  # Arguments:
-  #' @param   reg   - Region: Either UK or NI for UK in epsg:27700 or NI in epsg:29902
-  #' @param  cv    - Climate variable as a string: 'tas', 'tasmax', 'tasmin', or 'rain'
-  #' @param  start - Start date in 'YYYY_MM' format
-  #' @param  end   - End date in 'YYYY_MM' format (inclusive)
-  #' @param  time  - Time resolution, can be monthly (default), seasonal or annual
-  #' @param  agg   - Aggregation function when choosing seasonal or annual time. Can be mean, max, min or sum. Not necessary for monthly.
-  # Returns:
-  #' @return  A subset raster of the selected climate variable and date range
-  #' @export
+
   #Validate region
   if (!reg %in% c("uk", "ni")) {
     stop("Invalid region. Please choose 'uk' or 'ni'.")

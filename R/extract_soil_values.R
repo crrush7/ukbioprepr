@@ -1,10 +1,26 @@
-extract_soil_values <- function(df,
-                        type = 'grid',
-                        crs = NULL,
-                        prop = NULL) {
-  #df   -   data frame where one column is 'gridRef' or has x & y coords
-  #prop  -   character vector of relevant soil properties
-  #type   - either 'grid' or 'coords'
+#' Extract values on soil properties from raster files
+#' This function extracts values of chosen soil properties from 1km resolution raster files. Raster files are stored in an online repository, therefore this function relies on an internet connection.
+#' Raster files cover soil properties from 1999 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+
+#' @import terra
+#' @import igr
+#' @import rnrfa
+#' @param type - Either 'grid' if using grid references or 'coords' if using co-ordinates. Default is 'gridRef'
+#' @param df - a data frame. If type = ‘grid,’ df must contain either a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in.
+#' @param crs -  Required when type = coords, the crs of the X and Y coordinates. Must be in the format of 'EPSG:X'. If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.
+#' @param prop - Character vector of all soil properties a user wishes to extract values for. The default is all properties. Properties can be the following:
+    #'"ocd", organic carbon density kg m-3,"bdod", bulk dens of fine earth fraction kg dm-3, "clay", clay (<0.002) in fine earth %, "cfvo", vol fraction of coarse fragments (>2mm) %,"sand", sand (> 0.05mm) in fine earth %,"silt", silt (0.002-0.05mm) in fine earth %
+    #' "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10, "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10, "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10, "cec", cation exchange capacity cmol(+)kg-1, "nitrogen", total nitrogen g kg-1, "phh2o", pH (H20), "soc", #soil organic carbon in fine earth g kg-1, "ocs" #organic carbon stocks kg m-2
+    #' All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.
+#' @return A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values and will be named indicating the soil property and the depth, e.g. ocd_D0to5cm, bdod_D100to200cm
+
+extract_soil_values <- function(type = 'grid',
+                                df,
+                                crs = NULL,
+                                prop = NULL
+) {
+
 
   #Checking input is data frame
   if (!is.data.frame(df)) {
@@ -58,7 +74,8 @@ extract_soil_values <- function(df,
     #total nitrogen g kg-1
     "phh2o",
     #pH (H20)
-    "soc" #soil organic carbon in fine earth g kg-1
+    "soc", #soil organic carbon in fine earth g kg-1,
+    "ocs" #organic carbon stocks kg m-2
   )
   #if no properties are entered, default is all
   if (is.null(prop)) {

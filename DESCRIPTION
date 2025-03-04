@@ -1,12 +1,16 @@
 Package: ukbioprepr
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Preparing Environmental Data for Biodiveristy Modelling in the UK
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: C. R. Rush
+Maintainer: C. R. Rush cr23569@essex.ac.uk
+Description: ukbioprepr provides functions for downloading raster files and extracting data on climate, soil and land cover variables for the United Kingdom. 
+  Extraction functions can handle grid references in both Irish Grid for Northern Ireland, and British National Grid for the whole of the UK as well as co-ordinates in different co-ordinate reference systems. 
+  Downloadable data products created through leveraging existing open-source data sets fill any gaps to produce environmental measurements for biodiversity time-series data since 2000. 
+  ukbioprepr has been developed to address issues associated with environmental data preparation for UK biodiversity datasets, as well as expedite and streamline this important process. It provides a user-friendly toolkit for environmental data wrangling.
+  The functions included in this package facilitate UK biodiversity modelling which is valuable for those working towards important biodiversity targets. 
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
+Imports: terra, rnrfa, igr

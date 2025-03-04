@@ -1,23 +1,22 @@
 #' Extract values on climate variables from raster files
-#' This function extracts values from chosen climate variables using rasters from an online repository
-#' Users can use either grid references in EPSG:27700 or EPSG:29903 or co-ordinates and the function will extract values from the appropriate rasters
-#' Users can use alternative coordinates and input their EPSG:X and the function will reproject
-#' The output data frame will contain columns for all chosen variables within the date range
-#' Included variables are rain 'rain', average temperature 'tas', minumum temperature 'tasmin' and maximum temperature 'tasmax'
-#' Rain is measured in (mm) and all temperatures are measured in degrees Celsius
-#' Values can be monthly, seasonal and / or annual, where values are generated based on input date range
-#'
-#' @param df - a data frame that must contain either a column of grid references 'gridRef' or columns for coordinates 'X' and 'Y'
-#' @param type - Either 'grid' if using grid references or 'coords' if using co-ordinates
-#' @param crs - CRS if type = coords. Must be in format of 'EPSG:X'
-#' @param  start - Start date in 'YYYY_MM' format
-#' @param  end   - End date in 'YYYY_MM' format (inclusive)
-#' @param climvar  - Character vector of climate variables. Default is all:c('rain', 'tas', 'tasmin', 'tasmax')
-#' @param time - Character vector of time aggregates for values. Can be c('monthly', 'seasonal', 'annual')
-#' @return A data frame containing grid reference if type = 'grid', coordinates, the grid type and all extracted values for relevant climate variables
+#' This function extracts values of chosen climate variables from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.
+#' Raster files cover climate variables from 1999 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+#' @import terra
+#' @import igr
+#' @import rnrfa
+#' @param type - Either 'grid' if using grid references or 'coords' if using co-ordinates. Default is 'gridRef'
+#' @param df - a data frame. If type = ‘grid,’ df must contain either a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in.
+#' @param crs -  Required when type = coords, the crs of the X and Y coordinates. Must be in the format of 'EPSG:X'. If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.
+#' @param  start - Start date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. Start must be before end.
+#' @param  end   - End date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. End must be after start.
+#' @param climvar  - Character vector of climate variables a user wishes to extract data for. Can choose from ‘rain’ for rainfall, ‘tas’ for mean temperature, ‘tasmin’ for minimum temperature or ‘tasmax’ for maximum temperature. The default is all four variables. Rainfall is measured in millimetres and the three temperature variables are measured in degrees Celsius.
+#' @param time - Character vector of time aggregates for values. Can include ‘monthly’, ‘seasonal’ and ‘annual’. There is no default and must be chosen. If choosing ‘monthly’, each value will be extracted for each month from start to end inclusive. If choosing ‘seasonal’, a value for each season will be extracted for all complete seasons between start and end. Seasons are standardised as follows: Winter = December, January, February, Spring = March, April, May, Summer = June, July, August, Autumn = September, October, November. There are warnings for any incomplete seasons. If choosing ‘annual’, the annual values are extracted from the start date, for example, if start = ‘2012_04’, each annual value will be calculated from April each year. There are warnings for incomplete years. When choosing ‘seasonal’ and / or ‘annual’, the values of the variables are aggregated in the following way: ‘rain’ = total rainfall during time frame, ‘tas’ = mean temperature during time frame, ‘tasmin’ = minimum temperature during time frame and ‘tasmax’ = maximum temperature during time frame. If you are interested in alternative aggregations, for example the mean minimum temperature during a specified time frame, you can generate raster files using the fetch_climate_raster function.
+#' @return A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values and will be named indicating the variable, date and time period e.g. tas_2014_09, tasmax_winter_2018-2019, rain_2016_9-2017_8.
 
-extract_climate_values <- function(df,
-                           type = grid,
+
+extract_climate_values <- function(type = 'grid',
+                           df,
                            crs = NULL,
                            start,
                            end,

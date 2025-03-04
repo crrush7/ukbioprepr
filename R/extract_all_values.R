@@ -1,9 +1,30 @@
-#function for extracting data from all available datasets
-extractAll <- function(df,
-                       type = 'grid',
+#’Function for extracting data from all available environmental variable rasters
+#' This function extracts values of climate, soil and land cover from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.
+#' Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+#' @import terra
+#' @import igr
+#' @import rnrfa
+#' @param type - Either 'grid' if using grid references or 'coords' if using co-ordinates. Default is 'gridRef'
+#' @param df - a data frame. If type = ‘grid,’ df must contain either a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in. If landcover = TRUE, df must contain a numeric column ‘year’ as land cover extractions are completed at each location and at each specified year.
+#' @param crs -  Required when type = coords, the crs of the X and Y coordinates. Must be in the format of 'EPSG:X'. If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.
+#' @param  start - Required when climate = TRUE. Start date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. Start must be before end.
+#' @param  end   - Required when climate = TRUE. End date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. End must be after start.
+#' @param soil -When soil = TRUE, values of all available soil properties at all depths are extracted. Properties can be the following:
+#'"ocd", organic carbon density kg m-3,"bdod", bulk dens of fine earth fraction kg dm-3, "clay", clay (<0.002) in fine earth %, "cfvo", vol fraction of coarse fragments (>2mm) %,"sand", sand (> 0.05mm) in fine earth %,"silt", silt (0.002-0.05mm) in fine earth %
+#' "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10, "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10, "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10, "cec", cation exchange capacity cmol(+)kg-1, "nitrogen", total nitrogen g kg-1, "phh2o", pH (H20), "soc", #soil organic carbon in fine earth g kg-1, "ocs" #organic carbon stocks kg m-2
+#' All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.
+#' @param landcover - When landcover = TRUE, land cover extraction at each location and year are performed,. There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. From 2000, there are less land cover classes, some of which are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned. Values are percentages of cover in a 1km grid square. If ‘year’ is from 2015 onwards, land cover classes are: ‘blw’: broad leaved woodland, ‘cw’: coniferous woodland, ‘ara’: arable land, ‘ig’: improved grassland, ‘ng’: neutral grassland, ‘cg’: calcareous grassland, ‘ag’: acid grassland, ‘fen’: fen, ‘hea’: heather, ‘hgl’: heather grassland, ‘bog’: bog, ‘inr’: inland rock, ‘sw’: saltwater, ‘fw’: freshwater, ‘slr’: supralittoral rock, ‘sls’” supralittoral sediment, ‘lr’: littoral rock, ‘ls’: littoral sediment, ‘sm’: saltmarsh, ‘urb’: urban, ‘sub’: suburban. If ‘year’ spans before 2015, the class column names would instead be: ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of ‘grassagg’ for grasses and ‘upland’ for upland classes. For more information on these, please read the accompanying documentation.
+#' @param climate - When climate = TRUE, values for climate variables are extracted at each location. Climate variables are rain (mm), average temperature, tas, maximum temperature, tasmax and minimum temperature, tasmin. All temperatures are measured in degrees Celsius.
+#' @param climtime - Character vector of time aggregates for climate values. Can include ‘monthly’, ‘seasonal’ and ‘annual’. Default is all three.. If choosing ‘monthly’, each value will be extracted for each month from start to end inclusive. If choosing ‘seasonal’, a value for each season will be extracted for all complete seasons between start and end. Seasons are standardised as follows: Winter = December, January, February, Spring = March, April, May, Summer = June, July, August, Autumn = September, October, November. There are warnings for any incomplete seasons. If choosing ‘annual’, the annual values are extracted from the start date, for example, if start = ‘2012_04’, each annual value will be calculated from April each year. There are warnings for incomplete years. When choosing ‘seasonal’ and / or ‘annual’, the values of the variables are aggregated in the following way: ‘rain’ = total rainfall during time frame, ‘tas’ = mean temperature during time frame, ‘tasmin’ = minimum temperature during time frame and ‘tasmax’ = maximum temperature during time frame. If you are interested in alternative aggregations, for example the mean minimum temperature during a specified time frame, you can generate raster files using the fetch_climate_raster function.
+#' @return A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. The input ‘year’ column is included. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values of whichever variables have been chosen. If landcover = TRUE, values are of each land cover class for each year in the data frame. If soil = TRUE, extracted values are for each property along with their depth for example: ocd_D0to5cm. If climate = TRUE, extracted values will be named indicating the variable, date and time period e.g. tas_2014_09, tasmax_winter_2018-2019, rain_2016_9-2017_8.
+
+
+extract_all_values <- function(type = 'grid',
+                       df,
                        crs = NULL,
-                       start,
-                       end,
+                       start = NULL,
+                       end = NULL,
                        soil = TRUE,
                        landcover = TRUE,
                        climate = TRUE,
@@ -37,6 +58,12 @@ extractAll <- function(df,
   }
   #Climate specific input checks
   if(climate == TRUE){
+    if(is.null(start)){
+      stop('start must be provided when climate = TRUE')
+    }
+    if(is.null(end)){
+      stop('end must be provided when climate = TRUE')
+    }
     #check if start and end is in correct format
     if (!grepl("^\\d{4}_\\d{2}$", start) ||
         !grepl("^\\d{4}_\\d{2}$", end)) {
