@@ -20,6 +20,7 @@
 #' @param  agg   - Aggregation function when choosing seasonal or annual time. Can be 'mean', 'min', 'max' or 'sum.' Not required for time = 'monthly'.
 # Returns:
 #' @return  A subset raster of the selected climate variable, time parameter and date range at 1km resolution
+#' @export
 fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg = 0) {
 
   #Validate region

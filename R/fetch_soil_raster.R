@@ -13,7 +13,7 @@
 #' "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10, "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10, "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10, "cec", cation exchange capacity cmol(+)kg-1, "nitrogen", total nitrogen g kg-1, "phh2o", pH (H20), "soc", #soil organic carbon in fine earth g kg-1, "ocs" #organic carbon stocks kg m-2
 #' Soil properties are available at a range of depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.
 #' @return a list of rasters of specified region for specified soil properties. Each raster is for one soil property, at 1km resolution, with layers corresponding to available depths.
-
+#' @export
 fetch_soil_raster <- function(reg, prop = NULL) {
 
 

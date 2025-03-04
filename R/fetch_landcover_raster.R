@@ -14,7 +14,7 @@
 #' @param   starty   - The start year for required land cover. Must be numeric and from 2000 - 2023. starty must be before endy.
 #' @param endy  - The end year for required land cover. Must be numeric and from 2000 - 2023. endy must be after starty.
 #' @return a list of rasters of specified region for specified time frame. Each raster is for one year and is at 1km resolution, with layers corresponding to land cover classes.
-
+#' @export
 fetch_landcover_raster <- function(reg, starty, endy) {
 
   #define base url for zenodo repository
