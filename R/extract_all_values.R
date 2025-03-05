@@ -303,7 +303,7 @@ extract_all_values <- function(type = 'grid',
       "soc" #soil organic carbon in fine earth g kg-1
     )
     #Download data from Zenodo
-    baseUrl <- "https://zenodo.org/records/14945739/files/"
+    baseUrl <- "https://zenodo.org/records/14973735/files/"
 
     #temp directory
     tempDir <- tempdir()

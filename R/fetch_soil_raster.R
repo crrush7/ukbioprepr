@@ -18,7 +18,7 @@ fetch_soil_raster <- function(reg, prop = NULL) {
 
 
   #define base url for zenodo repository
-  baseUrl <- "https://zenodo.org/records/14945739/files/"
+  baseUrl <- "https://zenodo.org/records/14973735/files/"
 
   #Validate region input
   if (!reg %in% c('ni', 'uk')) {
