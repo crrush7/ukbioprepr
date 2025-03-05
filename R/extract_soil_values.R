@@ -179,7 +179,7 @@ extract_soil_values <- function(type = 'grid',
     resultDf <- as.data.frame(do.call(rbind, coords))
   }
   #Download data from Zenodo
-  baseUrl <- "https://zenodo.org/records/14852620/files/"
+  baseUrl <- "https://zenodo.org/records/14945739/files/"
 
   #Determine what region is needed
   dlUK <- ("British National Grid" %in% resultDf$gridType)
