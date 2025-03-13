@@ -1,34 +1,107 @@
-#’Function for extracting data from all available environmental variable rasters
-#' This function extracts values of climate, soil and land cover from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.
-#' Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+#' Function for extracting data from all available environmental variable rasters
+#'
+#' This function extracts values of climate, soil and land cover from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.\cr
+#' Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. \cr
+#' Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+#' These raster data products have been created using original datasets from SoilGrids250m 2.0 for soils, HadUK Grid by UK Met Office for climate, and UK's Centre for Ecology and Hydrology for land cover.
 #' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
 #' @import terra
 #' @import igr
 #' @import rnrfa
-#' @param type - Either 'grid' if using grid references or 'coords' if using co-ordinates. Default is 'gridRef'
-#' @param df - a data frame. If type = ‘grid,’ df must contain either a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in. If landcover = TRUE, df must contain a numeric column ‘year’ as land cover extractions are completed at each location and at each specified year.
-#' @param crs -  Required when type = coords, the crs of the X and Y coordinates. Must be in the format of 'EPSG:X'. If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.
-#' @param  start - Required when climate = TRUE. Start date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. Start must be before end.
-#' @param  end   - Required when climate = TRUE. End date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. End must be after start.
-#' @param soil -When soil = TRUE, values of all available soil properties at all depths are extracted. Properties can be the following:
-#'"ocd", organic carbon density kg m-3,"bdod", bulk dens of fine earth fraction kg dm-3, "clay", clay (<0.002) in fine earth %, "cfvo", vol fraction of coarse fragments (>2mm) %,"sand", sand (> 0.05mm) in fine earth %,"silt", silt (0.002-0.05mm) in fine earth %
-#' "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10, "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10, "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10, "cec", cation exchange capacity cmol(+)kg-1, "nitrogen", total nitrogen g kg-1, "phh2o", pH (H20), "soc", #soil organic carbon in fine earth g kg-1, "ocs" #organic carbon stocks kg m-2
+#' @param type Either 'grid' if using grid references or 'coords' if using co-ordinates.
+#' @param df a data frame. \cr
+#' If type = ‘grid,’ df must contain a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. \cr
+#' When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in.\cr
+#' When landcover = TRUE, a 'year' column is required. \cr
+#' When climate = TRUE, a 'year' and 'month' column is required. \cr
+#' @param crs Required when type = 'coords', the co-ordinate reference system of the X and Y coordinates. Must be in the format of 'EPSG:X'. \cr
+#' If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.
+#' @param soil Logical. Default is True. Determines whether the user would like extractions for soil properties.
+#' @param soilprops Character vector of all soil properties a user wishes to extract values for. The default is all properties. \cr
+#' Properties can be the following:\cr
+#' "ocd", organic carbon density kg m-3 \cr
+#' "bdod", bulk dens of fine earth fraction kg dm-3 \cr
+#' "clay", clay (<0.002) in fine earth %, \cr
+#' "cfvo", vol fraction of coarse fragments (>2mm) % \cr
+#' "sand", sand (> 0.05mm) in fine earth % \cr
+#' "silt", silt (0.002-0.05mm) in fine earth % \cr
+#' "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10 \cr
+#' "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10 \cr
+#' "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10 \cr
+#' "cec", cation exchange capacity cmol(+)kg-1 \cr
+#' "nitrogen", total nitrogen g kg-1 \cr
+#' "phh2o", pH (H20) \cr
+#' "soc", #soil organic carbon in fine earth g kg-1 \cr
+#' "ocs" #organic carbon stocks kg m-2 \cr
 #' All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.
-#' @param landcover - When landcover = TRUE, land cover extraction at each location and year are performed,. There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. From 2000, there are less land cover classes, some of which are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned. Values are percentages of cover in a 1km grid square. If ‘year’ is from 2015 onwards, land cover classes are: ‘blw’: broad leaved woodland, ‘cw’: coniferous woodland, ‘ara’: arable land, ‘ig’: improved grassland, ‘ng’: neutral grassland, ‘cg’: calcareous grassland, ‘ag’: acid grassland, ‘fen’: fen, ‘hea’: heather, ‘hgl’: heather grassland, ‘bog’: bog, ‘inr’: inland rock, ‘sw’: saltwater, ‘fw’: freshwater, ‘slr’: supralittoral rock, ‘sls’” supralittoral sediment, ‘lr’: littoral rock, ‘ls’: littoral sediment, ‘sm’: saltmarsh, ‘urb’: urban, ‘sub’: suburban. If ‘year’ spans before 2015, the class column names would instead be: ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of ‘grassagg’ for grasses and ‘upland’ for upland classes. For more information on these, please read the accompanying documentation.
-#' @param climate - When climate = TRUE, values for climate variables are extracted at each location. Climate variables are rain (mm), average temperature, tas, maximum temperature, tasmax and minimum temperature, tasmin. All temperatures are measured in degrees Celsius.
-#' @param climtime - Character vector of time aggregates for climate values. Can include ‘monthly’, ‘seasonal’ and ‘annual’. Default is all three.. If choosing ‘monthly’, each value will be extracted for each month from start to end inclusive. If choosing ‘seasonal’, a value for each season will be extracted for all complete seasons between start and end. Seasons are standardised as follows: Winter = December, January, February, Spring = March, April, May, Summer = June, July, August, Autumn = September, October, November. There are warnings for any incomplete seasons. If choosing ‘annual’, the annual values are extracted from the start date, for example, if start = ‘2012_04’, each annual value will be calculated from April each year. There are warnings for incomplete years. When choosing ‘seasonal’ and / or ‘annual’, the values of the variables are aggregated in the following way: ‘rain’ = total rainfall during time frame, ‘tas’ = mean temperature during time frame, ‘tasmin’ = minimum temperature during time frame and ‘tasmax’ = maximum temperature during time frame. If you are interested in alternative aggregations, for example the mean minimum temperature during a specified time frame, you can generate raster files using the fetch_climate_raster function.
-#' @return A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. The input ‘year’ column is included. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values of whichever variables have been chosen. If landcover = TRUE, values are of each land cover class for each year in the data frame. If soil = TRUE, extracted values are for each property along with their depth for example: ocd_D0to5cm. If climate = TRUE, extracted values will be named indicating the variable, date and time period e.g. tas_2014_09, tasmax_winter_2018-2019, rain_2016_9-2017_8.
+#' @param landcover Logical. Default is True. Determines whether the user would like extractions for land cover. \cr
+#' There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. \cr
+#' From 2000, there are less land cover classes, than between 2015 - 2023, given the original datasets. Some classes are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned.
+#' @param climate Logical. Default is TRUE. Determines whether user would like extractions for climate variables.
+#' @param climvar Character vector of climate variables a user wishes to extract data for. \cr
+#' Can choose from ‘rain’ for rainfall, ‘tas’ for mean temperature, ‘tasmin’ for minimum temperature or ‘tasmax’ for maximum temperature. The default is all four variables. Rainfall is measured in millimetres and the three temperature variables are measured in degrees Celsius.
+#' @param climtime Character vector of time aggregates for values. Can include ‘monthly’, ‘seasonal’ and ‘annual’. There is no default and must be chosen. \cr
+#' If choosing ‘monthly’, each value will be extracted for each location at its month and year. \cr
+#' If choosing ‘seasonal’, a value for each season will be extracted for the season that the month and year is in and the three seasons previous. \cr
+#' For example, if your location has a year of 2015 and a month 7 (July), your seasonal values will be for Summer 2015, Spring 2015, Winter 2014/15 and Autumn 2014. \cr
+#' Seasons are standardised as follows: \cr
+#' Winter = December, January, February \cr
+#' Spring = March, April, May \cr
+#' Summer = June, July, August \cr
+#' Autumn = September, October, November\cr
+#' There are warnings for any incomplete seasons. \cr
+#' If choosing ‘annual’, the annual values generated from annualstartmonth, for example, if annualstartmonth = 4, each annual value will be calculated from April to the following March each year. \cr
+#' When choosing ‘seasonal’ and / or ‘annual’, the values of the variables are aggregated in the following way: \cr
+#' ‘rain’ = total rainfall during time frame \cr
+#' ‘tas’ = mean temperature during time frame \cr
+#' ‘tasmin’ = minimum temperature during time frame \cr
+#' ‘tasmax’ = maximum temperature during time frame \cr
+#' If you are interested in alternative aggregations, for example the mean rainfall during a specified time frame, you can generate raster files using the fetch_climate_raster function.
+#' @param annualstartmonth Numeric. Required if 'climtime' includes 'annual.' Must be an integer between 1 and 12, indicating the start month of the annual time period.
+#' @return A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ The original 'month' and 'year' columns are included if originally input. \cr
+#' Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. \cr
+#' If soil = true, columns include extracted values and will be named indicating the soil property and the depth, e.g. ocd_D0to5cm, bdod_D100to200cm. \cr
+#' If landcover = true, columns will indicate the % cover of each land cover class in that 1km grid square.
+#' #' If 'year' is from 2015 onwards, land cover classes are: \cr
+#' ‘blw’: broad leaved woodland \cr
+#' ‘cw’: coniferous woodland \cr
+#' ‘ara’: arable land \cr
+#' ‘ig’: improved grassland \cr
+#' ‘ng’: neutral grassland \cr
+#' ‘cg’: calcareous grassland \cr
+#' ‘ag’: acid grassland \cr
+#' ‘fen’: fen \cr
+#' ‘hea’: heather \cr
+#' ‘hgl’: heather grassland \cr
+#' ‘bog’: bog \cr
+#' ‘inr’: inland rock \cr
+#' ‘sw’: saltwater \cr
+#' ‘fw’: freshwater \cr
+#' ‘slr’: supralittoral rock \cr
+#' ‘sls’” supralittoral sediment \cr
+#' ‘lr’: littoral rock \cr
+#' ‘ls’: littoral sediment \cr
+#' ‘sm’: saltmarsh \cr
+#' ‘urb’: urban \cr
+#' ‘sub’: suburban \cr
+#' If ‘year’ spans before 2015, the class column names would instead be: \cr
+#' ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
+#' ‘grassagg’ for grasses and \cr
+#' ‘upland’ for upland classes \cr
+#' For more information on these, please read the accompanying documentation. \cr
+#' If climate = TRUE, columns will be available for the variable and time period e.g. monthly_tas, winter_rain, annual_tasmin.
 #' @export
 
-extract_all_values <- function(type = 'grid',
+extract_all_values <- function(type,
                        df,
                        crs = NULL,
-                       start = NULL,
-                       end = NULL,
                        soil = TRUE,
+                       soilprops = NULL,
                        landcover = TRUE,
                        climate = TRUE,
-                       climtime = c('monthly', 'seasonal', 'annual')){
+                       climvar = c('tas', 'tasmin', 'tasmax', 'rain'),
+                       climtime = c('monthly', 'seasonal', 'annual'),
+                       annualstartmonth = NULL){
 
   #Checking inputs
   #Checking input is data frame
@@ -58,72 +131,40 @@ extract_all_values <- function(type = 'grid',
   }
   #Climate specific input checks
   if(climate == TRUE){
-    if(is.null(start)){
-      stop('start must be provided when climate = TRUE')
+    #Check if columns exist
+      required <- c("year", "month")
+    missing <- setdiff(required, colnames(df))
+    if (length(missing) > 0) {
+      stop(
+        "The following required columns are missing from the input data frame: ",
+        paste(missing, collapse = ", ")
+      )
     }
-    if(is.null(end)){
-      stop('end must be provided when climate = TRUE')
-    }
-    #check if start and end is in correct format
-    if (!grepl("^\\d{4}_\\d{2}$", start) ||
-        !grepl("^\\d{4}_\\d{2}$", end)) {
-      stop("Please provide valid 'start' and 'end' dates in 'YYYY_MM' format.")
-    }
-    #Extract year and month from start and end
-    startyear <- as.numeric(substr(start, 1, 4))
-    startmonth <- as.numeric(substr(start, 6, 7))
-    endyear <- as.numeric(substr(end, 1, 4))
-    endmonth <- as.numeric(substr(end, 6, 7))
-
-    #Check if year is within valid range (1999-2023)
-    if (!(startyear >= 1999 && startyear <= 2023)) {
-      stop("'start' year must be between 1999 and 2023.")
-    }
-    if (!(endyear >= 1999 && endyear <= 2023)) {
-      stop("'end' year must be between 1999 and 2023.")
+    #Validate 'time' input
+    valid_time_options <- c("annual", "seasonal", "monthly")
+    if (!all(climtime %in% valid_time_options)) {
+      invalid_time <- setdiff(climtime, valid_time_options)
+      stop(paste("Error: Invalid 'climtime' value(s):", paste(invalid_time, collapse = ", "),
+                 ". Must be one or more of 'annual', 'seasonal', or 'monthly'."))
     }
 
-    #Check if month is valid (01-12)
-    if (!(startmonth >= 1 && startmonth <= 12)) {
-      stop("'start' month must be between 01 and 12.")
+    #Validate 'climvar' input
+    valid_climvars <- c("rain", "tas", "tasmin", "tasmax")
+    if (!all(climvar %in% valid_climvars)) {
+      invalid_climvar <- setdiff(climvar, valid_climvars)
+      stop(paste("Error: Invalid 'climvar' value(s):", paste(invalid_climvar, collapse = ", "),
+                 ". Must be one or more of 'rain', 'tas', 'tasmin', 'tasmax'."))
     }
-    if (!(endmonth >= 1 && endmonth <= 12)) {
-      stop("'end' month must be between 01 and 12.")
-    }
-    #Convert start and end to Date objects for comparison
-    sdate <- as.Date(paste0(substr(start, 1, 4), "-", substr(start, 6, 7), "-01"))
-    edate <- as.Date(paste0(substr(end, 1, 4), "-", substr(end, 6, 7), "-01"))
-
-    #Ensure start date is before end date
-    if (sdate > edate) {
-      stop("Error: Start date must be before end date.")
-    }
-
-    #Calculate number of months in range
-    num_months <- 12 * (as.numeric(format(edate, "%Y")) - as.numeric(format(sdate, "%Y"))) +
-      (as.numeric(format(edate, "%m")) - as.numeric(format(sdate, "%m"))) + 1
-
-    #Error handling for annual selection
-    if ("annual" %in% climtime && num_months < 12) {
-      stop("Error: The selected time range must cover at least 12 months for annual data.")
-    }
-
-    #Define standard seasons
-    seasonsDef <- list(
-      "winter" = c(12, 1, 2),
-      "spring" = c(3, 4, 5),
-      "summer" = c(6, 7, 8),
-      "autumn" = c(9, 10, 11)
-    )
-
-    #Check for one complete season if season is selected
-    if ("seasonal" %in% climtime) {
-      available_months <- as.numeric(format(seq(sdate, edate, by = "month"), "%m"))
-      complete_season <- any(sapply(seasonsDef, function(season) all(season %in% available_months)))
-
-      if (!complete_season) {
-        stop("Error: The selected time range must include at least one complete season for seasonal data.")
+    #Validate 'annualstartmonth' requirement and range
+    if ("annual" %in% climtime) {
+      if (is.null(annualstartmonth)) {
+        stop("Error: 'annualstartmonth' must be provided when 'climtime' includes 'annual'.")
       }
+      if (!is.numeric(annualstartmonth) || annualstartmonth < 1 || annualstartmonth > 12) {
+        stop("Error: 'annualstartmonth' must be a numeric value between 1 and 12.")
+      }
+    } else if (!is.null(annualstartmonth)) {
+      warning("'annualstartmonth' is provided but 'climtime' does not include 'annual'. It will be ignored.")
     }
   }
   #Land cover specific warnings
@@ -151,7 +192,61 @@ extract_all_values <- function(type = 'grid',
     }
   }
   #no soil specific warnings as all covered and all properties will be downloaded
-
+  if(soil == TRUE){
+  #list all soil properties
+  allProp <- c(
+    "ocd",
+    #organic carbon desnity kg m-3
+    "bdod",
+    #bulk dens of fine earth fraction kg dm-3
+    "clay",
+    #clay (<0.002) in fine earth %
+    "cfvo",
+    #vol fraction of coarse fragments (>2mm) %
+    "sand",
+    #sand (> 0.05mm) in fine earth %
+    "silt",
+    #silt (0.002-0.05mm) in fine earth %
+    "wv0010",
+    #vol of water content at -10kPa (10-2cm3 cm-3)*10
+    "wv0033",
+    #vol of water content at -33kPa (10-2cm3 cm-3)*10
+    "wv1500",
+    #vol of water content at -1500kPa (10-2cm3 cm-3)*10
+    "cec",
+    #cation exchange capacity cmol(+)kg-1
+    "nitrogen",
+    #total nitrogen g kg-1
+    "phh2o",
+    #pH (H20)
+    "soc", #soil organic carbon in fine earth g kg-1,
+    "ocs" #organic carbon stocks kg m-2
+  )
+  #if no properties are entered, default is all
+  if (is.null(soilprops)) {
+    soilprops <- allProp
+  }
+  #Validate property input
+  if (!is.character(soilprops)) {
+    stop("Properties must be a character vector (e.g., c('clay', 'sand')) or a single string.")
+  }
+  invalprop <- setdiff(soilprops, allProp)
+  if (length(invalprop) > 0) {
+    warning(
+      'The following properties are not available and will be ignored: ',
+      paste(invalprop, collapse = ', ')
+    )
+    #remove any invalid
+    prop <- setdiff(soilprops, invalprop)
+  }
+  # Stop if no valid properties remain
+  if (length(soilprops) == 0) {
+    stop(
+      "No valid properties were selected. Please choose from: ",
+      paste(allProp, collapse = ", ")
+    )
+  }
+  }
   #Coordinates
   if (type == 'coords') {
     message('type is coords')
@@ -184,6 +279,15 @@ extract_all_values <- function(type = 'grid',
                          "Y_transformed",
                          "gridType",
                          "year")]
+    }
+    if(climate){
+      resultDf <- df[, c("X",
+                         "Y",
+                         "X_transformed",
+                         "Y_transformed",
+                         "gridType",
+                         "year",
+                         "month")]
     } else {
       resultDf <- df[, c("X",
                          "Y",
@@ -198,6 +302,7 @@ extract_all_values <- function(type = 'grid',
     #initialise refrences
     refs <- df$gridRef
     years <- df$year
+    months <- df$month
     #Classify grid references
     isIrish <- sapply(refs, function(ref) {
       grepl("^[A-TV-Z]\\d", ref)  # Irish grid refs start with a single letter A-Z (excluding I) followed by a digit
@@ -213,11 +318,22 @@ extract_all_values <- function(type = 'grid',
     #Convert references to coordinates
     coords <- lapply(seq_along(refs), function(i) {
       ref <- refs[i]
-      if(landcover){
-        year <- years[i]
-      }
+      year <- years[i]
+      month <- months[i]
+
       if (isIrish[i]) {
         result <- igr::igr_to_ig(ref) # Irish grid to coords
+        if(landcover && climate) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
+              gridType = "Irish Grid",
+              year = year,
+              month = month)
+          )
+        }
         if(landcover){
           return(
             data.frame(
@@ -227,7 +343,18 @@ extract_all_values <- function(type = 'grid',
               gridType = "Irish Grid",
               year = year
             )
-          )} else {
+          )}
+        if(climate){
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "Irish Grid",
+                year = year,
+                month = month
+              )
+            )}else {
             return(
               data.frame(
                 gridRef = ref,
@@ -240,26 +367,49 @@ extract_all_values <- function(type = 'grid',
 
       } else if (isBritish[i]) {
         result <- rnrfa::osg_parse(ref) # British grid reference to coords in BNG
+
+        if (landcover && climate) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
+              gridType = "British National Grid",
+              year = year,
+              month = month
+            )
+          )
+        }
         if(landcover){
           return(
             data.frame(
               gridRef = ref,
-              X_transformed = as.numeric(result$easting),
-              Y_transformed = as.numeric(result$northing),
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
               gridType = "British National Grid",
               year = year
             )
-          )
-        } else {
+          )}
+        if(climate){
           return(
             data.frame(
               gridRef = ref,
-              X_transformed = as.numeric(result$easting),
-              Y_transformed = as.numeric(result$northing),
-              gridType = "British National Grid"
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
+              gridType = "British National Grid",
+              year = year,
+              month = month
             )
-          )
-        }
+          )} else {
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "British National Grid"
+              )
+            )
+          }
       } else {
         stop("Unrecognized grid reference: ", ref)
       }
@@ -275,33 +425,7 @@ extract_all_values <- function(type = 'grid',
   #soils
   if(soil){
     #list all soil properties
-    prop <- c(
-      "ocd",
-      #organic carbon desnity kg m-3
-      "bdod",
-      #bulk dens of fine earth fraction kg dm-3
-      "clay",
-      #clay (<0.002) in fine earth %
-      "cfvo",
-      #vol fraction of coarse fragments (>2mm) %
-      "sand",
-      #sand (> 0.05mm) in fine earth %
-      "silt",
-      #silt (0.002-0.05mm) in fine earth %
-      "wv0010",
-      #vol of water content at -10kPa (10-2cm3 cm-3)*10
-      "wv0033",
-      #vol of water content at -33kPa (10-2cm3 cm-3)*10
-      "wv1500",
-      #vol of water content at -1500kPa (10-2cm3 cm-3)*10
-      "cec",
-      #cation exchange capacity cmol(+)kg-1
-      "nitrogen",
-      #total nitrogen g kg-1
-      "phh2o",
-      #pH (H20)
-      "soc" #soil organic carbon in fine earth g kg-1
-    )
+    prop <- soilprops
     #Download data from Zenodo
     baseUrl <- "https://zenodo.org/records/14973735/files/"
 
@@ -350,6 +474,10 @@ extract_all_values <- function(type = 'grid',
         nilocs <- which(resultDf$gridType == 'Irish Grid')
         if (length(nilocs) > 0) {
           extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")])[, -1]
+          #some rasters have one layer
+          if (is.vector(extractedNI)) {
+            extractedNI <- data.frame(extractedNI)
+          }
           #Get layer names for columns
           colnames(extractedNI) <- paste0(p, "_", names(niRast))
           #Add extracted values to results df
@@ -361,8 +489,12 @@ extract_all_values <- function(type = 'grid',
         uklocs <- which(resultDf$gridType == 'British National Grid')
         if (length(uklocs) > 0) {
           extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")])[, -1]
+          #some rasters have one layer
+          if (is.vector(extractedUK)) {
+            extractedNI <- data.frame(extractedNI)
+          }
           #Get layer names for columns
-          colnames(extractedUK) <- paste0(p, "_", names(ukRast))
+          colnames(as.data.frame(extractedUK)) <- paste0(p, "_", names(ukRast))
           #Add extracted values to results df
           resultDf[uklocs, colnames(extractedUK)] <- extractedUK
         }
@@ -449,19 +581,61 @@ extract_all_values <- function(type = 'grid',
   }
   #climate
   if(climate){
-    #Extract year and month from start and end
-    startyear <- as.numeric(substr(start, 1, 4))
-    startmonth <- as.numeric(substr(start, 6, 7))
-    endyear <- as.numeric(substr(end, 1, 4))
-    endmonth <- as.numeric(substr(end, 6, 7))
-    #initalise years
-    inputYears <- startyear:endyear
-    #initalise climate variables
-    climvar <- c('tas', 'tasmin', 'tasmax', 'rain')
-    #initalise time
-    time <- climtime
-    #determine possible layers based on selected vars and dates
-    lyears <- seq(as.integer(startyear), as.integer(endyear), by = 1)
+    #Extract earliest and latest year & month from resultDf
+    minYear <- min(as.numeric(df$year))
+    maxYear <- max(as.numeric(df$year))
+    minMonth <- min(as.numeric(df$month[df$year == minYear]))
+    maxMonth <- max(as.numeric(df$month[df$year == maxYear]))
+
+    #Initialize final start and end dates
+    startyear <- minYear
+    startmonth <- minMonth
+    endyear <- maxYear
+    endmonth <- maxMonth
+
+    #Adjust for seasonal and annual data
+    if ("seasonal" %in% climtime | "annual" %in% climtime) {
+      if (startmonth != 12) {
+        startyear <- startyear - 1
+      }
+      if (endmonth %in% c(11, 12)) {
+        endyear <- endyear + 1
+      }
+    }
+
+    #Adjust for annual data
+    if ("annual" %in% climtime) {
+      startmonth <- annualstartmonth
+      endmonth <- ifelse(startmonth == 1, 12, startmonth - 1)
+
+      #If the annual period spans two calendar years, adjust endyear
+      if (startmonth > endmonth) {
+        endyear <- endyear + 1
+      }
+    }
+
+    #Ensure startyear and endyear cover all necessary time periods
+    final_startyear <- min(startyear, minYear)
+    final_endyear <- max(endyear, maxYear)
+
+    #Ensure startmonth and endmonth cover all necessary months
+    final_startmonth <- min(startmonth, minMonth)
+    final_endmonth <- max(endmonth, maxMonth)
+
+    #Format into YYYY_MM strings
+    start <- paste0(final_startyear, "_", sprintf("%02d", as.numeric(final_startmonth)))
+    end <- paste0(final_endyear, "_", sprintf("%02d", final_endmonth))
+    #Check if year is within valid range (1999-2023)
+    if (!(final_startyear >= 1999 && final_startyear <= 2023)) {
+      stop("'start' year must be between 1999 and 2023.")
+    }
+    if (!(final_endyear >= 1999 && final_endyear <= 2023)) {
+      stop("'end' year must be between 1999 and 2023.")
+    }
+    #initalise years for dl rasters
+    inputYears <- final_startyear:final_endyear
+    #Generate possible layer names based on selected climate variables and date range
+    lyears <- seq(as.integer(final_startyear), as.integer(final_endyear), by = 1)
     lmonths <- sprintf("%02d", 1:12)
     datecombo <- expand.grid(lyears, lmonths)
     datecombo <- apply(datecombo, 1, function(x)
@@ -474,7 +648,7 @@ extract_all_values <- function(type = 'grid',
 
     if (dlUK) {
       message(
-        "Your dataset contains UK data. These files are very large. Please consider increasing your timeout through options(timeout = x)."
+        "Your climate dataset contains UK data. These files are very large. Please consider increasing your timeout through options(timeout = x)."
       )
     }
 
@@ -522,42 +696,45 @@ extract_all_values <- function(type = 'grid',
     }
     annualseasonList <- list()
     monthlyList <- list()
-    if ("annual" %in% time | "seasonal" %in% time) {
+    if ("annual" %in% climtime | "seasonal" %in% climtime) {
       annualseasonList <- rastList
     }
-    if ('monthly' %in% time) {
+    if ('monthly' %in% climtime) {
       monthlyList <- rastList
     }
-    message('Extracting climate data.')
+    if ('monthly' %in% climtime) {
+      #extract climate data on selected vars based on year / month
+      message("Extracting monthly values. This might take a while. ")
+      for (i in seq_len(nrow(resultDf))) {
+        rowYear <- resultDf$year[i]
+        rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
 
-    if('monthly' %in% time) {
-      #extract climate data on selected vars
-      for (y in inputYears) {
-        if (dlNI & paste0("ni_", y) %in% names(monthlyList)) {
-          niRast <- monthlyList[[paste0('ni_', y)]]
-          nilocs <- which(resultDf$gridType == 'Irish Grid')
-          if (length(nilocs) > 0) {
-            extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")], ID = FALSE)
-            climnames <- names(niRast)
-            colnames(extractedNI) <- climnames
-            resultDf[nilocs, climnames] <- extractedNI
+        for (var in climvar) {
+          layerName <- paste0(var, "_", rowYear, "_", rowMonth)
+
+          if (dlNI & paste0('ni_', rowYear) %in% names(monthlyList)) {
+            niRast <- monthlyList[[paste0('ni_', rowYear)]]
+            if (layerName %in% names(niRast) &&
+                resultDf$gridType[i] == "Irish Grid") {
+              extractedVal <- terra::extract(niRast[[layerName]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
+              resultDf[i, paste0("monthly_", var)] <- extractedVal
+            }
           }
-        }
-        if (dlUK & paste0("uk_", y) %in% names(monthlyList)) {
-          ukRast <- monthlyList[[paste0('uk_', y)]]
-          uklocs <- which(resultDf$gridType == 'British National Grid')
-          if (length(uklocs) > 0) {
-            extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")], ID = FALSE)
-            climnames <- names(ukRast)
-            colnames(extractedUK) <- climnames
-            resultDf[uklocs, climnames] <- extractedUK
+
+          if (dlUK & paste0('uk_', rowYear) %in% names(monthlyList)) {
+            ukRast <- monthlyList[[paste0('uk_', rowYear)]]
+            if (layerName %in% names(ukRast) &&
+                resultDf$gridType[i] == "British National Grid") {
+              extractedVal <- terra::extract(ukRast[[layerName]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
+              resultDf[i, paste0("monthly_", var)] <- extractedVal
+            }
           }
         }
       }
     }
     #if user has selected annual or seasonal split the rasters based on vars
     aRastList <- list()
-    if ("annual" %in% time | "seasonal" %in% time) {
+    if ("annual" %in% climtime | "seasonal" %in% climtime) {
       for (var in climvar) {
         if (dlUK) {
           uklist <- annualseasonList[grepl("^uk", names(annualseasonList))]
@@ -579,7 +756,7 @@ extract_all_values <- function(type = 'grid',
         }
       }
     } #handle annual
-    if ('annual' %in% time) {
+    if ('annual' %in% climtime) {
       annualRastList <- list()
       #get env names from list
       for (rastName in names(aRastList)) {
@@ -598,14 +775,23 @@ extract_all_values <- function(type = 'grid',
           mean
         )
         for (y in customYears) {
-          yearStart <- paste0(y, "_", sprintf("%02d", startmonth))
+          yearStart <- paste0(y, "_", sprintf("%02d", as.numeric(startmonth)))
           if (startmonth == 1) {
-            yearEnd <- paste0(y, "_12")
-            annName <- paste0(envVar, "_annual_", y)
+            yearEnd <- paste0(y, "12")  # No underscore, two-digit month
+            annName <- paste0(envVar,
+                              "_",
+                              y,
+                              sprintf("%02d", startmonth),
+                              "_",
+                              yearEnd)
           } else {
-            yearEnd <- paste0(y + 1, "_", sprintf("%02d", startmonth - 1))
-            annName <- paste0(envVar, y, "_", startmonth, "-", y + 1, "_", startmonth -
-                                1)
+            yearEnd <- paste0(y + 1, sprintf("%02d", as.numeric(startmonth) - 1))
+            annName <- paste0(envVar,
+                              "_",
+                              y,
+                              sprintf("%02d", as.numeric(startmonth)),
+                              "_",
+                              yearEnd)
           }
           annualLayers <- which(layerNames >= yearStart &
                                   layerNames <= yearEnd)
@@ -634,40 +820,63 @@ extract_all_values <- function(type = 'grid',
       }
 
       #extract annual data using the new list of rasters
-      for (cv in climvar) {
-        if (dlNI & paste0("ni_", cv) %in% names(annualRastList)) {
-          niRast <- annualRastList[[paste0('ni_', cv)]]
-          nilocs <- which(resultDf$gridType == 'Irish Grid')
-          if (length(nilocs) > 0) {
-            extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")], ID = FALSE)
-            climnames <- names(niRast)
-            colnames(extractedNI) <- climnames
-            resultDf[nilocs, climnames] <- extractedNI
-          }
+      #perform extraction
+      message("Extracting annual climate values. This may take a while.")
+      for (i in seq_len(nrow(resultDf))) {
+        rowYear <- resultDf$year[i]
+        rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
+        rowym <- paste(rowYear, "_", rowMonth)
+        #Determine if uk or ni
+        if (resultDf$gridType[i] == 'Irish Grid') {
+          region_prefix <- "ni_"
+        } else if (resultDf$gridType[i] == 'British National Grid') {
+          region_prefix <- "uk_"
+        } else {
+          next  #Skip if grid type is unknown
         }
-        if (dlUK & paste0("uk_", cv) %in% names(annualRastList)) {
-          ukRast <- annualRastList[[paste0('uk_', cv)]]
-          uklocs <- which(resultDf$gridType == 'British National Grid')
-          if (length(uklocs) > 0) {
-            extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")], ID = FALSE)
-            climnames <- names(ukRast)
-            colnames(extractedUK) <- climnames
-            resultDf[uklocs, climnames] <- extractedUK
+        #find correct raster based on row year and month
+        for (cv in climvar) {
+          matchingLayer <- NULL
+          rastName <- paste0(region_prefix, cv)
+          if (!rastName %in% names(annualRastList)) {
+            warning(paste("No raster found for", rastName))
+            next
+          }
+          raster <- annualRastList[[rastName]]
+          layerNames <- names(raster)
+          #find correct layer
+          for (layer in layerNames) {
+            #extract start and end from raster name
+            timerange <- sub(paste0("^", cv, "_"), "", layer)
+            parts <- unlist(strsplit(timerange, "_"))
+            startym <- parts[1]
+            endym <- parts[2]
+            rowym_num <- as.numeric(paste0(rowYear, sprintf("%02d", as.numeric(rowMonth))))  #Convert row to YYYYMM
+            if (rowym_num >= startym & rowym_num <= endym) {
+              matchingLayer <- layer
+              break
+            }
+          }
+          if (!is.null(matchingLayer)) {
+            extractVal <- terra::extract(raster[[matchingLayer]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
+            resultDf[i, paste0('annual_', cv)] <- extractVal
+          } else {
+            warning(paste("No matching layer found for", rowym, "in", rastName))
           }
         }
       }
     }
 
     #handling if seasonal is selected
-    if('seasonal' %in% time){
-      seasonalRastList <- list()
-      #following standard seasons
+    if ('seasonal' %in% climtime) {
+      #Define standard seasons
       seasonsDef <- list(
         "winter" = c(12, 1, 2),
         "spring" = c(3, 4, 5),
         "summer" = c(6, 7, 8),
         "autumn" = c(9, 10, 11)
       )
+      seasonalRastList <- list()
       #get env names from list
       for (rastName in names(aRastList)) {
         x <- aRastList[[rastName]]
@@ -686,19 +895,43 @@ extract_all_values <- function(type = 'grid',
           "tas" = mean,
           mean
         )
+        #functions for season
+        findSeason <- function(month) {
+          month <- as.numeric(month)
+          for (season in names(seasonsDef)) {
+            if (month %in% seasonsDef[[season]])
+              return(season)
+          }
+          return(NA)
+        }
+        getPrevSeasons <- function(rowSeason) {
+          seasonOrder <- c("winter", "spring", "summer", "autumn")
+          season_index <- match(rowSeason, seasonOrder)
+          prevSeasons <- c(
+            seasonOrder[season_index],
+            #Current season
+            seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
+            # -1 season
+            seasonOrder[ifelse(season_index - 2 < 1, 4 + (season_index - 2), season_index - 2)],
+            # -2 seasons
+            seasonOrder[ifelse(season_index - 3 < 1, 4 + (season_index - 3), season_index - 3)]  # -3 seasons)
+          )
+          return(prevSeasons)
+        }
         #validating available seasons
-        for(y in unique(years)){
-          for (season in names(seasonsDef)){
+        for (y in unique(years)) {
+          for (season in names(seasonsDef)) {
             seasonMonths <- seasonsDef[[season]]
             #winter spans two calendar years
-            if(season == "winter"){
+            if (season == "winter") {
               seasonLayers <- which((years == y &
                                        months == 12) |
-                                      (years == (y + 1) & months %in% c(1,2)))
-              seasonYear <- paste0(y, "-", y + 1)
+                                      (years == (y + 1) &
+                                         months %in% c(1, 2)))
+              seasonYear <- paste0(y, "_", y + 1)
             } else {
               seasonLayers <- which(years == y & months %in% seasonMonths)
-              seasonYear <- y
+              seasonYear <- paste0(y, "_", y)
             }
             #Checking dates
             if (length(seasonLayers) < 3) {
@@ -706,7 +939,7 @@ extract_all_values <- function(type = 'grid',
               next
             }
             seasonalRast <- app(x[[seasonLayers]], aggFunct, na.rm = TRUE)
-            names(seasonalRast) <- paste(envVar, "_", season, "_", seasonYear)
+            names(seasonalRast) <- paste0(envVar, "_", season, "_", seasonYear)
             seasonalRasts <- c(seasonalRasts, seasonalRast)
           }
         }
@@ -717,31 +950,71 @@ extract_all_values <- function(type = 'grid',
         seasonalRastList[[rastName]] <- inRangeRast
       }
       #extract seasonal data using the new list of rasters
-      for (cv in climvar) {
-        if (dlNI & paste0("ni_", cv) %in% names(seasonalRastList)) {
-          niRast <- seasonalRastList[[paste0('ni_', cv)]]
-          nilocs <- which(resultDf$gridType == 'Irish Grid')
-          if (length(nilocs) > 0) {
-            extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")], ID = FALSE)
-            climnames <- names(niRast)
-            colnames(extractedNI) <- climnames
-            resultDf[nilocs, climnames] <- extractedNI
+      #extract for current season and three previous
+      #every row has a value for every season
+      #loop through
+      message("Extracting seasonal climate values. This might take a while.")
+      for (i in seq_len(nrow(resultDf))) {
+        rowYear <- as.numeric(resultDf$year[i])
+        rowMonth <- resultDf$month[i]
+        rowSeason <- findSeason(rowMonth)
+        seasonList <- getPrevSeasons(rowSeason)
+
+        regPrefix <- ifelse(resultDf$gridType[i] == 'Irish Grid', 'ni_', 'uk_')
+
+        for (cv in climvar) {
+          rasterName <- paste0(regPrefix, cv)
+          if (!rasterName %in% names(seasonalRastList)) {
+            warning(paste("No raster found for ", rasterName))
+            next
           }
-        }
-        if (dlUK & paste0("uk_", cv) %in% names(seasonalRastList)) {
-          ukRast <- seasonalRastList[[paste0('uk_', cv)]]
-          uklocs <- which(resultDf$gridType == 'British National Grid')
-          if (length(uklocs) > 0) {
-            extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")], ID = FALSE)
-            climnames <- names(ukRast)
-            colnames(extractedUK) <- climnames
-            resultDf[uklocs, climnames] <- extractedUK
+          raster <- seasonalRastList[[rasterName]]
+          for (season_index in seq_along(seasonList)) {
+            season <- seasonList[season_index]
+
+            #Determine the base year for the first season
+            if (season_index == 1) {
+              if (season == "winter") {
+                #Winter spans two years: Dec (prev year) + Jan-Feb (curr year)
+                seasonY1 <- ifelse(rowMonth == 12, rowYear, rowYear - 1)
+                seasonY2 <- seasonY1 + 1
+              } else {
+                seasonY1 <- rowYear
+                seasonY2 <- rowYear
+              }
+            } else {
+              #If winter was the first season, shift all others back one year
+              if (seasonList[1] == "winter") {
+                seasonY1 <- rowYear - 1
+                seasonY2 <- rowYear - 1
+              } else if (season == "winter") {
+                #If this season is winter, shift it back a year
+                seasonY1 <- rowYear - 1
+                seasonY2 <- rowYear
+              } else if (season == "autumn" && "winter" %in% seasonList[1:season_index]) {
+                #If winter already happened, autumn must be in the previous year
+                seasonY1 <- rowYear - 1
+                seasonY2 <- rowYear - 1
+              } else {
+                #Default case: use the same year as rowYear
+                seasonY1 <- rowYear
+                seasonY2 <- rowYear
+              }
+            }
+
+            #Construct the correct seasonal layer name
+            seasonLayerName <- paste(cv, season, seasonY1, seasonY2, sep = "_")
+
+            if (seasonLayerName %in% names(raster)) {
+              extractVal <- terra::extract(raster[[seasonLayerName]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
+              resultDf[i, paste0(season, "_", cv)] <- extractVal
+            } else {
+              warning(paste("No matching layer found for", seasonLayerName))
+            }
           }
         }
       }
     }
-    #empty temp directory
-    # unlink(tempDir, recursive=TRUE)
   }
 
   return(resultDf)

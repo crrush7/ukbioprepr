@@ -2,49 +2,120 @@
 % Please edit documentation in R/extract_all_values.R
 \name{extract_all_values}
 \alias{extract_all_values}
-\title{This function extracts values of climate, soil and land cover from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.
-Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
-Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)}
+\title{Function for extracting data from all available environmental variable rasters}
 \usage{
 extract_all_values(
-  type = "grid",
+  type,
   df,
   crs = NULL,
-  start = NULL,
-  end = NULL,
   soil = TRUE,
+  soilprops = NULL,
   landcover = TRUE,
   climate = TRUE,
-  climtime = c("monthly", "seasonal", "annual")
+  climvar = c("tas", "tasmin", "tasmax", "rain"),
+  climtime = c("monthly", "seasonal", "annual"),
+  annualstartmonth = NULL
 )
 }
 \arguments{
-\item{type}{- Either 'grid' if using grid references or 'coords' if using co-ordinates. Default is 'gridRef'}
+\item{type}{Either 'grid' if using grid references or 'coords' if using co-ordinates.}
 
-\item{df}{- a data frame. If type = ‘grid,’ df must contain either a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in. If landcover = TRUE, df must contain a numeric column ‘year’ as land cover extractions are completed at each location and at each specified year.}
+\item{df}{a data frame. \cr
+If type = ‘grid,’ df must contain a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. \cr
+When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in.\cr
+When landcover = TRUE, a 'year' column is required. \cr
+When climate = TRUE, a 'year' and 'month' column is required. \cr}
 
-\item{crs}{-  Required when type = coords, the crs of the X and Y coordinates. Must be in the format of 'EPSG:X'. If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.}
+\item{crs}{Required when type = 'coords', the co-ordinate reference system of the X and Y coordinates. Must be in the format of 'EPSG:X'. \cr
+If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.}
 
-\item{start}{- Required when climate = TRUE. Start date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. Start must be before end.}
+\item{soil}{Logical. Default is True. Determines whether the user would like extractions for soil properties.}
 
-\item{end}{- Required when climate = TRUE. End date for extractions. Must be in ‘YYYY_MM’ format. Cannot be earlier than ‘1999_01’ or later than ‘2023_12’. End must be after start.}
-
-\item{soil}{-When soil = TRUE, values of all available soil properties at all depths are extracted. Properties can be the following:
-"ocd", organic carbon density kg m-3,"bdod", bulk dens of fine earth fraction kg dm-3, "clay", clay (<0.002) in fine earth %, "cfvo", vol fraction of coarse fragments (>2mm) %,"sand", sand (> 0.05mm) in fine earth %,"silt", silt (0.002-0.05mm) in fine earth %
-"wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10, "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10, "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10, "cec", cation exchange capacity cmol(+)kg-1, "nitrogen", total nitrogen g kg-1, "phh2o", pH (H20), "soc", #soil organic carbon in fine earth g kg-1, "ocs" #organic carbon stocks kg m-2
+\item{soilprops}{Character vector of all soil properties a user wishes to extract values for. The default is all properties. \cr
+Properties can be the following:\cr
+"ocd", organic carbon density kg m-3 \cr
+"bdod", bulk dens of fine earth fraction kg dm-3 \cr
+"clay", clay (<0.002) in fine earth %, \cr
+"cfvo", vol fraction of coarse fragments (>2mm) % \cr
+"sand", sand (> 0.05mm) in fine earth % \cr
+"silt", silt (0.002-0.05mm) in fine earth % \cr
+"wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10 \cr
+"wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10 \cr
+"wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10 \cr
+"cec", cation exchange capacity cmol(+)kg-1 \cr
+"nitrogen", total nitrogen g kg-1 \cr
+"phh2o", pH (H20) \cr
+"soc", #soil organic carbon in fine earth g kg-1 \cr
+"ocs" #organic carbon stocks kg m-2 \cr
 All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.}
 
-\item{landcover}{- When landcover = TRUE, land cover extraction at each location and year are performed,. There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. From 2000, there are less land cover classes, some of which are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned. Values are percentages of cover in a 1km grid square. If ‘year’ is from 2015 onwards, land cover classes are: ‘blw’: broad leaved woodland, ‘cw’: coniferous woodland, ‘ara’: arable land, ‘ig’: improved grassland, ‘ng’: neutral grassland, ‘cg’: calcareous grassland, ‘ag’: acid grassland, ‘fen’: fen, ‘hea’: heather, ‘hgl’: heather grassland, ‘bog’: bog, ‘inr’: inland rock, ‘sw’: saltwater, ‘fw’: freshwater, ‘slr’: supralittoral rock, ‘sls’” supralittoral sediment, ‘lr’: littoral rock, ‘ls’: littoral sediment, ‘sm’: saltmarsh, ‘urb’: urban, ‘sub’: suburban. If ‘year’ spans before 2015, the class column names would instead be: ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of ‘grassagg’ for grasses and ‘upland’ for upland classes. For more information on these, please read the accompanying documentation.}
+\item{landcover}{Logical. Default is True. Determines whether the user would like extractions for land cover. \cr
+There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. \cr
+From 2000, there are less land cover classes, than between 2015 - 2023, given the original datasets. Some classes are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned.}
 
-\item{climate}{- When climate = TRUE, values for climate variables are extracted at each location. Climate variables are rain (mm), average temperature, tas, maximum temperature, tasmax and minimum temperature, tasmin. All temperatures are measured in degrees Celsius.}
+\item{climate}{Logical. Default is TRUE. Determines whether user would like extractions for climate variables.}
 
-\item{climtime}{- Character vector of time aggregates for climate values. Can include ‘monthly’, ‘seasonal’ and ‘annual’. Default is all three.. If choosing ‘monthly’, each value will be extracted for each month from start to end inclusive. If choosing ‘seasonal’, a value for each season will be extracted for all complete seasons between start and end. Seasons are standardised as follows: Winter = December, January, February, Spring = March, April, May, Summer = June, July, August, Autumn = September, October, November. There are warnings for any incomplete seasons. If choosing ‘annual’, the annual values are extracted from the start date, for example, if start = ‘2012_04’, each annual value will be calculated from April each year. There are warnings for incomplete years. When choosing ‘seasonal’ and / or ‘annual’, the values of the variables are aggregated in the following way: ‘rain’ = total rainfall during time frame, ‘tas’ = mean temperature during time frame, ‘tasmin’ = minimum temperature during time frame and ‘tasmax’ = maximum temperature during time frame. If you are interested in alternative aggregations, for example the mean minimum temperature during a specified time frame, you can generate raster files using the fetch_climate_raster function.}
+\item{climvar}{Character vector of climate variables a user wishes to extract data for. \cr
+Can choose from ‘rain’ for rainfall, ‘tas’ for mean temperature, ‘tasmin’ for minimum temperature or ‘tasmax’ for maximum temperature. The default is all four variables. Rainfall is measured in millimetres and the three temperature variables are measured in degrees Celsius.}
+
+\item{climtime}{Character vector of time aggregates for values. Can include ‘monthly’, ‘seasonal’ and ‘annual’. There is no default and must be chosen. \cr
+If choosing ‘monthly’, each value will be extracted for each location at its month and year. \cr
+If choosing ‘seasonal’, a value for each season will be extracted for the season that the month and year is in and the three seasons previous. \cr
+For example, if your location has a year of 2015 and a month 7 (July), your seasonal values will be for Summer 2015, Spring 2015, Winter 2014/15 and Autumn 2014. \cr
+Seasons are standardised as follows: \cr
+Winter = December, January, February \cr
+Spring = March, April, May \cr
+Summer = June, July, August \cr
+Autumn = September, October, November\cr
+There are warnings for any incomplete seasons. \cr
+If choosing ‘annual’, the annual values generated from annualstartmonth, for example, if annualstartmonth = 4, each annual value will be calculated from April to the following March each year. \cr
+When choosing ‘seasonal’ and / or ‘annual’, the values of the variables are aggregated in the following way: \cr
+‘rain’ = total rainfall during time frame \cr
+‘tas’ = mean temperature during time frame \cr
+‘tasmin’ = minimum temperature during time frame \cr
+‘tasmax’ = maximum temperature during time frame \cr
+If you are interested in alternative aggregations, for example the mean rainfall during a specified time frame, you can generate raster files using the fetch_climate_raster function.}
+
+\item{annualstartmonth}{Numeric. Required if 'climtime' includes 'annual.' Must be an integer between 1 and 12, indicating the start month of the annual time period.}
 }
 \value{
-A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. The input ‘year’ column is included. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values of whichever variables have been chosen. If landcover = TRUE, values are of each land cover class for each year in the data frame. If soil = TRUE, extracted values are for each property along with their depth for example: ocd_D0to5cm. If climate = TRUE, extracted values will be named indicating the variable, date and time period e.g. tas_2014_09, tasmax_winter_2018-2019, rain_2016_9-2017_8.
+A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ The original 'month' and 'year' columns are included if originally input. \cr
+Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. \cr
+If soil = true, columns include extracted values and will be named indicating the soil property and the depth, e.g. ocd_D0to5cm, bdod_D100to200cm. \cr
+If landcover = true, columns will indicate the % cover of each land cover class in that 1km grid square.
+#' If 'year' is from 2015 onwards, land cover classes are: \cr
+‘blw’: broad leaved woodland \cr
+‘cw’: coniferous woodland \cr
+‘ara’: arable land \cr
+‘ig’: improved grassland \cr
+‘ng’: neutral grassland \cr
+‘cg’: calcareous grassland \cr
+‘ag’: acid grassland \cr
+‘fen’: fen \cr
+‘hea’: heather \cr
+‘hgl’: heather grassland \cr
+‘bog’: bog \cr
+‘inr’: inland rock \cr
+‘sw’: saltwater \cr
+‘fw’: freshwater \cr
+‘slr’: supralittoral rock \cr
+‘sls’” supralittoral sediment \cr
+‘lr’: littoral rock \cr
+‘ls’: littoral sediment \cr
+‘sm’: saltmarsh \cr
+‘urb’: urban \cr
+‘sub’: suburban \cr
+If ‘year’ spans before 2015, the class column names would instead be: \cr
+‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
+‘grassagg’ for grasses and \cr
+‘upland’ for upland classes \cr
+For more information on these, please read the accompanying documentation. \cr
+If climate = TRUE, columns will be available for the variable and time period e.g. monthly_tas, winter_rain, annual_tasmin.
 }
 \description{
-This function extracts values of climate, soil and land cover from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.
-Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+This function extracts values of climate, soil and land cover from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.\cr
+Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. \cr
+Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+These raster data products have been created using original datasets from SoilGrids250m 2.0 for soils, HadUK Grid by UK Met Office for climate, and UK's Centre for Ecology and Hydrology for land cover.
 Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
 }

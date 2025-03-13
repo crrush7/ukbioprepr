@@ -2,26 +2,57 @@
 % Please edit documentation in R/extract_landcover_values.R
 \name{extract_landcover_values}
 \alias{extract_landcover_values}
-\title{Extract values on land cover from raster files
-This function extracts values of land cover  from 1km resolution raster files over a number of years. Raster files are stored in an online repository, therefore this function relies on an internet connection.
-Raster files cover land cover percentage summaries from 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
-Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)}
+\title{Extract values on land cover from raster files}
 \usage{
-extract_landcover_values(type = "grid", df, crs = NULL)
+extract_landcover_values(type, df, crs = NULL)
 }
 \arguments{
-\item{type}{- Either 'grid' if using grid references or 'coords' if using co-ordinates. Default is 'gridRef'}
+\item{type}{Either 'grid' if using grid references or 'coords' if using co-ordinates.}
 
-\item{df}{- a data frame. If type = ‘grid,’ df must contain either a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in. df must also contain a numerical column of yearly values ‘year’. Land cover extractions  are performed at each location and year.}
+\item{df}{a data frame that must contain a 'year' column. \cr
+If type = ‘grid,’ df must contain a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. \cr
+When type = ‘grid,’ this function will detect whether the input grid references belong to British National Grid (EPSG:27700) or Irish Grid (EPSG:29903). When type = ‘coords’, an additional argument is required to specify the coordinate reference system that ‘X’ and ‘Y’ are projected in.}
 
-\item{crs}{-  Required when type = coords, the crs of the X and Y coordinates. Must be in the format of 'EPSG:X'. If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.}
+\item{crs}{Required when type = 'coords', the co-ordinate reference system of the X and Y coordinates. Must be in the format of 'EPSG:X'. \cr
+If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British National Grid, this function will project the co-ordinates to EPSG:27700 so that extractions can be carried out using the UK wide rasters in EPSG:27700.}
 }
 \value{
-A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. The input ‘year’ column is included. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values of each land cover class, corresponding to the year. Values are percentages of cover in a 1km grid square. If ‘year’ is from 2015 onwards, land cover classes are: ‘blw’: broad leaved woodland, ‘cw’: coniferous woodland, ‘ara’: arable land, ‘ig’: improved grassland, ‘ng’: neutral grassland, ‘cg’: calcareous grassland, ‘ag’: acid grassland, ‘fen’: fen, ‘hea’: heather, ‘hgl’: heather grassland, ‘bog’: bog, ‘inr’: inland rock, ‘sw’: saltwater, ‘fw’: freshwater, ‘slr’: supralittoral rock, ‘sls’” supralittoral sediment, ‘lr’: littoral rock, ‘ls’: littoral sediment, ‘sm’: saltmarsh, ‘urb’: urban, ‘sub’: suburban. If ‘year’ spans before 2015, the class column names would instead be: ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of ‘grassagg’ for grasses and ‘upland’ for upland classes. For more information on these, please read the accompanying documentation.
+A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ The original 'year' column is also included. \cr
+Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. \cr
+A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. Remaining columns are of extracted values of each land cover class, corresponding to the year. Values are percentages of cover in a 1km grid square. \cr
+If 'year' is from 2015 onwards, land cover classes are: \cr
+‘blw’: broad leaved woodland \cr
+‘cw’: coniferous woodland \cr
+‘ara’: arable land \cr
+‘ig’: improved grassland \cr
+‘ng’: neutral grassland \cr
+‘cg’: calcareous grassland \cr
+‘ag’: acid grassland \cr
+‘fen’: fen \cr
+‘hea’: heather \cr
+‘hgl’: heather grassland \cr
+‘bog’: bog \cr
+‘inr’: inland rock \cr
+‘sw’: saltwater \cr
+‘fw’: freshwater \cr
+‘slr’: supralittoral rock \cr
+‘sls’” supralittoral sediment \cr
+‘lr’: littoral rock \cr
+‘ls’: littoral sediment \cr
+‘sm’: saltmarsh \cr
+‘urb’: urban \cr
+‘sub’: suburban \cr
+If ‘year’ spans before 2015, the class column names would instead be: \cr
+‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
+‘grassagg’ for grasses and \cr
+‘upland’ for upland classes \cr
+For more information on these, please read the accompanying documentation.
 }
 \description{
-Extract values on land cover from raster files
-This function extracts values of land cover  from 1km resolution raster files over a number of years. Raster files are stored in an online repository, therefore this function relies on an internet connection.
-Raster files cover land cover percentage summaries from 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
+This function extracts values of land cover from 1km resolution raster files over a number of years. Raster files are stored in an online repository, therefore this function relies on an internet connection. \cr
+Raster files cover land cover percentage summaries from 2000 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid. \cr
+These data products were created using original raster files of land cover of Great Britain and Northern Ireland by UK Centre for Ecology and Hydrology.
+There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. \cr
+From 2000, there are less land cover classes, than between 2015 - 2023, given the original datasets. Some classes are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned.
 Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
 }

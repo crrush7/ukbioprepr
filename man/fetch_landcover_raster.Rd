@@ -4,25 +4,51 @@
 \alias{fetch_landcover_raster}
 \title{Download land cover raster files}
 \usage{
-fetch_landcover_raster(reg, starty, endy)
+fetch_landcover_raster(reg, startyear, endyear)
 }
 \arguments{
-\item{reg}{- Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid}
+\item{reg}{Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid}
 
-\item{starty}{- The start year for required land cover. Must be numeric and from 2000 - 2023. starty must be before endy.}
+\item{startyear}{The start year for required land cover. Must be numeric and from 2000 - 2023. startyear must be before endyear.}
 
-\item{endy}{- The end year for required land cover. Must be numeric and from 2000 - 2023. endy must be after starty.}
+\item{endyear}{The end year for required land cover. Must be numeric and from 2000 - 2023. endyear must be after startyear.}
 }
 \value{
 a list of rasters of specified region for specified time frame. Each raster is for one year and is at 1km resolution, with layers corresponding to land cover classes.
 }
 \description{
-This function downloads prepared land cover raster files from Zenodo online repository
-Raster values are percentage cover for 1km grid squares.
-Raster files are of all of the United Kingdom (excluding Isle of Man) in British National Grid (EPSG:27700) or Northern Ireland in Irish Grid (EPSG:29903)
-Output rasters are in line with grid of chosen region
-Users indicate the years they require years for.
-The ouput is a list of rasters, with a raster for each year, with layers corresponding to each land cover class at 1km resolution.
-There are two sets of land cover rasters, 2000 - 2023 and 2015 - 2023, as from 2015 there are more detailled classes.
-If ‘starty’ is from 2015 onwards, land cover classes are: ‘blw’: broad leaved woodland, ‘cw’: coniferous woodland, ‘ara’: arable land, ‘ig’: improved grassland, ‘ng’: neutral grassland, ‘cg’: calcareous grassland, ‘ag’: acid grassland, ‘fen’: fen, ‘hea’: heather, ‘hgl’: heather grassland, ‘bog’: bog, ‘inr’: inland rock, ‘sw’: saltwater, ‘fw’: freshwater, ‘slr’: supralittoral rock, ‘sls’” supralittoral sediment, ‘lr’: littoral rock, ‘ls’: littoral sediment, ‘sm’: saltmarsh, ‘urb’: urban, ‘sub’: suburban. If ‘starty’ is before 2015, the class names would instead be: ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of ‘grassagg’ for grasses and ‘upland’ for upland classes. For more information on these, please read the accompanying documentation.
+This function downloads prepared land cover raster files from Zenodo online repository and therefore requires an internet connection.\cr
+Raster values are percentage cover for 1km grid squares.\cr
+Raster files are of all of the United Kingdom (excluding Isle of Man) in British National Grid (EPSG:27700) or Northern Ireland in Irish Grid (EPSG:29903).\cr
+Output rasters are in line with grid of chosen region.\cr
+Users indicate the years they require years for \cr
+The ouput is a list of rasters, with a raster for each year, with layers corresponding to each land cover class at 1km resolution.\cr
+There are two sets of land cover rasters, 2000 - 2023 and 2015 - 2023, as from 2015 there are more detailed classes\cr
+If 'year' is from 2015 onwards, land cover classes are: \cr
+‘blw’: broad leaved woodland \cr
+‘cw’: coniferous woodland \cr
+‘ara’: arable land \cr
+‘ig’: improved grassland \cr
+‘ng’: neutral grassland \cr
+‘cg’: calcareous grassland \cr
+‘ag’: acid grassland \cr
+‘fen’: fen \cr
+‘hea’: heather \cr
+‘hgl’: heather grassland \cr
+‘bog’: bog \cr
+‘inr’: inland rock \cr
+‘sw’: saltwater \cr
+‘fw’: freshwater \cr
+‘slr’: supralittoral rock \cr
+‘sls’” supralittoral sediment \cr
+‘lr’: littoral rock \cr
+‘ls’: littoral sediment \cr
+‘sm’: saltmarsh \cr
+‘urb’: urban \cr
+‘sub’: suburban \cr
+If ‘startyear’ is before 2015, the class column names would instead be: \cr
+‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
+‘grassagg’ for grasses and \cr
+‘upland’ for upland classes \cr
+For more information on these, please read the accompanying documentation.\cr
 }
