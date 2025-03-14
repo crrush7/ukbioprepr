@@ -4,7 +4,7 @@
 \alias{fetch_climate_raster}
 \title{Download and create climate raster files}
 \usage{
-fetch_climate_raster(reg, cv, start, end, time = "monthly", agg = 0)
+fetch_climate_raster(reg, cv, start, end, time = "monthly", agg)
 }
 \arguments{
 \item{reg}{Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid}
@@ -27,7 +27,11 @@ There are warnings for any incomplete seasons \cr
 If choosing ‘annual’, layers are created from the start date, for example, if start = ‘2012_04’, each annual layer will be calculated from April each year.\cr
 There are warnings for incomplete years.}
 
-\item{agg}{Aggregation function when choosing seasonal or annual time. Can be 'mean', 'min', 'max' or 'sum.' Not required for time = 'monthly'.}
+\item{agg}{Aggregation function when choosing seasonal or annual time. Can be 'mean', 'min', 'max' or 'sum.' Not required for time = 'monthly'. The default is as follows: \cr
+‘rain’ = total (sum) rainfall during time frame \cr
+‘tas’ = mean temperature during time frame \cr
+‘tasmin’ = minimum temperature during time frame \cr
+‘tasmax’ = maximum temperature during time frame \cr}
 }
 \value{
 A subset raster of the selected climate variable, time parameter and date range at 1km resolution.
