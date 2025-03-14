@@ -28,11 +28,15 @@
 #' There are warnings for any incomplete seasons \cr
 #' If choosing ‘annual’, layers are created from the start date, for example, if start = ‘2012_04’, each annual layer will be calculated from April each year.\cr
 #' There are warnings for incomplete years.
-#' @param  agg  Aggregation function when choosing seasonal or annual time. Can be 'mean', 'min', 'max' or 'sum.' Not required for time = 'monthly'.
+#' @param  agg  Aggregation function when choosing seasonal or annual time. Can be 'mean', 'min', 'max' or 'sum.' Not required for time = 'monthly'. The default is as follows: \cr
+#' ‘rain’ = total (sum) rainfall during time frame \cr
+#' ‘tas’ = mean temperature during time frame \cr
+#' ‘tasmin’ = minimum temperature during time frame \cr
+#' ‘tasmax’ = maximum temperature during time frame \cr
 # Returns:
 #' @return  A subset raster of the selected climate variable, time parameter and date range at 1km resolution.
 #' @export
-fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg = 0) {
+fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
 
   #Validate region
   if (!reg %in% c("uk", "ni")) {
@@ -49,23 +53,27 @@ fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg = 0)
     stop("Invalid time choice. Please choose 'monthly', 'seasonal' or 'annual'.")
   }
   #Validate aggregation function choice
-  if(time %in% c("seasonal", "annual") & missing(agg)) {
-    stop("Please choose a function to aggregate the monthly data.")
+  if (time %in% c("seasonal", "annual") & missing(agg)) {
+    #Set default aggregation based on cv
+    agg <- switch(cv,
+                  "rain" = "sum",
+                  "tas" = "mean",
+                  "tasmax" = "max",
+                  "tasmin" = "min",
+                  stop("Please choose a function to aggregate the monthly data or provide a valid cv."))
   }
-  if(time %in% c("seasonal", "annual") & (!agg %in% c("mean", "max", "min", "sum")))  {
+
+  #Check if the user-provided or default agg is valid
+  if (!agg %in% c("mean", "max", "min", "sum")) {
     stop("Invalid function choice. Please enter 'mean', 'max', 'min' or 'sum'.")
   }
-  aggFunct <- if (agg == 'min')
-    min
-  else if (agg == 'max')
-    max
-  else
-    if (agg == 'sum')
-      sum
-  else
-    if (agg == 'mean')
-      mean
-  else NULL
+
+  #Assign the correct aggregation function
+  aggFunct <- switch(agg,
+                     "min" = min,
+                     "max" = max,
+                     "sum" = sum,
+                     "mean" = mean)
 
   #check if start and end is in correct format
   if (!grepl("^\\d{4}_\\d{2}$", start) ||
