@@ -79,27 +79,40 @@ extract_climate_values <- function(type,
   valid_time_options <- c("annual", "seasonal", "monthly")
   if (!all(time %in% valid_time_options)) {
     invalid_time <- setdiff(time, valid_time_options)
-    stop(paste("Error: Invalid 'time' value(s):", paste(invalid_time, collapse = ", "),
-               ". Must be one or more of 'annual', 'seasonal', or 'monthly'."))
+    stop(
+      paste(
+        "Error: Invalid 'time' value(s):",
+        paste(invalid_time, collapse = ", "),
+        ". Must be one or more of 'annual', 'seasonal', or 'monthly'."
+      )
+    )
   }
 
   #Validate 'climvar' input
   valid_climvars <- c("rain", "tas", "tasmin", "tasmax")
   if (!all(climvar %in% valid_climvars)) {
     invalid_climvar <- setdiff(climvar, valid_climvars)
-    stop(paste("Error: Invalid 'climvar' value(s):", paste(invalid_climvar, collapse = ", "),
-               ". Must be one or more of 'rain', 'tas', 'tasmin', 'tasmax'."))
+    stop(
+      paste(
+        "Error: Invalid 'climvar' value(s):",
+        paste(invalid_climvar, collapse = ", "),
+        ". Must be one or more of 'rain', 'tas', 'tasmin', 'tasmax'."
+      )
+    )
   }
   #Validate 'annualstartmonth' requirement and range
   if ("annual" %in% time) {
     if (is.null(annualstartmonth)) {
       stop("Error: 'annualstartmonth' must be provided when 'time' includes 'annual'.")
     }
-    if (!is.numeric(annualstartmonth) || annualstartmonth < 1 || annualstartmonth > 12) {
+    if (!is.numeric(annualstartmonth) ||
+        annualstartmonth < 1 || annualstartmonth > 12) {
       stop("Error: 'annualstartmonth' must be a numeric value between 1 and 12.")
     }
   } else if (!is.null(annualstartmonth)) {
-    warning("'annualstartmonth' is provided but 'time' does not include 'annual'. It will be ignored.")
+    warning(
+      "'annualstartmonth' is provided but 'time' does not include 'annual'. It will be ignored."
+    )
   }
 
 
@@ -166,7 +179,9 @@ extract_climate_values <- function(type,
   #initalise years for dl rasters
   inputYears <- final_startyear:final_endyear
   #Generate possible layer names based on selected climate variables and date range
-  lyears <- seq(as.integer(final_startyear), as.integer(final_endyear), by = 1)
+  lyears <- seq(as.integer(final_startyear),
+                as.integer(final_endyear),
+                by = 1)
   lmonths <- sprintf("%02d", 1:12)
   datecombo <- expand.grid(lyears, lmonths)
   datecombo <- apply(datecombo, 1, function(x)
@@ -226,6 +241,8 @@ extract_climate_values <- function(type,
       message("Grid references contain both Irish and British National Grid coordinates.")
     }
 
+    #failedRef
+    failedRefs <- character()
 
     #Convert references to coordinates
     coords <- lapply(seq_along(refs), function(i) {
@@ -233,35 +250,64 @@ extract_climate_values <- function(type,
       year <- years[i]
       month <- months[i]
       if (isIrish[i]) {
-        result <- igr::igr_to_ig(ref) # Irish grid to coords
-        return(
-          data.frame(
-            gridRef = ref,
-            X_transformed = as.numeric(result[1]),
-            Y_transformed = as.numeric(result[2]),
-            gridType = "Irish Grid",
-            year = year,
-            month = month
-          )
+        result <- tryCatch(
+          igr::igr_to_ig(ref),
+          error = function(e)
+            NULL
         )
+        if (!is.null(result) && length(result) == 2) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
+              gridType = "Irish Grid",
+              year = year,
+              month = month
+            )
+          )
+        }
       } else if (isBritish[i]) {
-        result <- rnrfa::osg_parse(ref) # British grid reference to coords in BNG
-        return(
-          data.frame(
-            gridRef = ref,
-            X_transformed = as.numeric(result$easting),
-            Y_transformed = as.numeric(result$northing),
-            gridType = "British National Grid",
-            year = year,
-            month = month
+        result <- tryCatch(
+          rnrfa::osg_parse(ref),
+          error = function(e)
+            NULL
+        ) # British grid reference to coords in BNG
+        if (!is.null(result) &&
+            all(c("easting", "northing") %in% names(result))) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result$easting),
+              Y_transformed = as.numeric(result$northing),
+              gridType = "British National Grid",
+              year = year,
+              month = month
+            )
           )
-        )
-      } else {
-        stop("Unrecognized grid reference: ", ref)
+        }
       }
+      #If we reach this point, log the failed ref
+      failedRefs <<- c(failedRefs, ref)
+      return(
+        data.frame(
+          gridRef = ref,
+          X_transformed = NA_real_,
+          Y_transformed = NA_real_,
+          gridType = NA_character_
+        )
+      )
     })
     #create dataframe
     resultDf <- as.data.frame(do.call(rbind, coords))
+    #Issue a warning if any failed
+    if (length(failedRefs) > 0) {
+      warning(
+        "Coordinates could not be returned for the following references: ",
+        paste(failedRefs, collapse = ", "),
+        ". NA values were returned instead."
+      )
+    }
   }
 
   #Download data from Zenodo
@@ -277,7 +323,7 @@ extract_climate_values <- function(type,
   }
 
   #temp directory
-  tempDir <- tempdir()
+  tempDir <- ? tempdir()
 
   #initialise list
   rastList <- list()
@@ -525,16 +571,14 @@ extract_climate_values <- function(type,
       getPrevSeasons <- function(rowSeason) {
         seasonOrder <- c("winter", "spring", "summer", "autumn")
         season_index <- match(rowSeason, seasonOrder)
-        prevSeasons <- c(
-          seasonOrder[season_index],
-          #Current season
-          seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
-          # -1 season
-          seasonOrder[ifelse(season_index - 2 < 1, 4 + (season_index - 2), season_index - 2)],
-          # -2 seasons
-          seasonOrder[ifelse(season_index - 3 < 1, 4 + (season_index - 3), season_index - 3)]  # -3 seasons)
-        )
-        return(prevSeasons)
+        prevSeasons <- c(seasonOrder[season_index],
+                         #Current season
+                         seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
+                         # -1 season
+                         seasonOrder[ifelse(season_index - 2 < 1, 4 + (season_index - 2), season_index - 2)],
+                         # -2 seasons
+                         seasonOrder[ifelse(season_index - 3 < 1, 4 + (season_index - 3), season_index - 3)]  # -3 seasons))
+                         return(prevSeasons)
       }
       message("Extracting seasonal values.")
       #validating available seasons
@@ -609,7 +653,8 @@ extract_climate_values <- function(type,
               #If this season is winter, shift it back a year
               seasonY1 <- rowYear - 1
               seasonY2 <- rowYear
-            } else if (season == "autumn" && "winter" %in% seasonList[1:season_index]) {
+            } else if (season == "autumn" &&
+                       "winter" %in% seasonList[1:season_index]) {
               #If winter already happened, autumn must be in the previous year
               seasonY1 <- rowYear - 1
               seasonY2 <- rowYear - 1

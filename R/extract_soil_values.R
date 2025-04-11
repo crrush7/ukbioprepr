@@ -35,13 +35,7 @@
 #' Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. A column ‘gridType’ will indicate whether extractions have been performed using rasters of the United Kingdom on EPSG:27700 as ‘British National Grid’ or rasters of Northern Ireland on EPSG:29903 as ‘Irish Grid’. \cr
 #' Remaining columns are of extracted values and will be named indicating the soil property and the depth, e.g. ocd_D0to5cm, bdod_D100to200cm
 #' @export
-extract_soil_values <- function(type,
-                                df,
-                                crs = NULL,
-                                prop = NULL
-) {
-
-
+extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
   #Checking input is data frame
   if (!is.data.frame(df)) {
     stop("Input must be a data frame containing columns: 'gridRef'.")
@@ -94,12 +88,13 @@ extract_soil_values <- function(type,
     #total nitrogen g kg-1
     "phh2o",
     #pH (H20)
-    "soc", #soil organic carbon in fine earth g kg-1,
+    "soc",
+    #soil organic carbon in fine earth g kg-1,
     "ocs" #organic carbon stocks kg m-2
   )
   #if no properties are entered, default is all
   if (is.null(prop)) {
-    props <- allProp
+    prop <- allProp
   }
   #Validate property input
   if (!is.character(prop)) {
@@ -167,36 +162,67 @@ extract_soil_values <- function(type,
       message("Grid references contain both Irish and British National Grid coordinates.")
     }
 
+    #failedRef
+    failedRefs <- character()
 
     #Convert references to coordinates
     coords <- lapply(seq_along(refs), function(i) {
       ref <- refs[i]
       if (isIrish[i]) {
-        result <- igr::igr_to_ig(ref) # Irish grid to coords
-        return(
-          data.frame(
-            gridRef = ref,
-            X_transformed = as.numeric(result[1]),
-            Y_transformed = as.numeric(result[2]),
-            gridType = "Irish Grid"
-          )
+        result <- tryCatch(
+          igr::igr_to_ig(ref),
+          error = function(e)
+            NULL
         )
+        if (!is.null(result) && length(result) == 2) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
+              gridType = "Irish Grid"
+            )
+          )
+        }
       } else if (isBritish[i]) {
-        result <- rnrfa::osg_parse(ref) # British grid reference to coords in BNG
-        return(
-          data.frame(
-            gridRef = ref,
-            X_transformed = as.numeric(result$easting),
-            Y_transformed = as.numeric(result$northing),
-            gridType = "British National Grid"
+        result <- tryCatch(
+          rnrfa::osg_parse(ref),
+          error = function(e)
+            NULL
+        ) # British grid reference to coords in BNG
+        if (!is.null(result) &&
+            all(c("easting", "northing") %in% names(result))) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result$easting),
+              Y_transformed = as.numeric(result$northing),
+              gridType = "British National Grid"
+            )
           )
-        )
-      } else {
-        stop("Unrecognized grid reference: ", ref)
+        }
       }
+      #If we reach this point, log the failed ref
+      failedRefs <<- c(failedRefs, ref)
+      return(
+        data.frame(
+          gridRef = ref,
+          X_transformed = NA_real_,
+          Y_transformed = NA_real_,
+          gridType = NA_character_
+        )
+      )
     })
     #create dataframe
     resultDf <- as.data.frame(do.call(rbind, coords))
+    #Issue a warning if any failed
+    if (length(failedRefs) > 0) {
+      warning(
+        "Coordinates could not be returned for the following references: ",
+        paste(failedRefs, collapse = ", "),
+        ". NA values were returned instead."
+      )
+    }
   }
   #Download data from Zenodo
   baseUrl <- "https://zenodo.org/records/14973735/files/"

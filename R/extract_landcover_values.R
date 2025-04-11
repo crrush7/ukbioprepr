@@ -47,7 +47,6 @@
 #' For more information on these, please read the accompanying documentation.
 #' @export
 extract_landcover_values <- function(type, df, crs = NULL) {
-
   #Checking input is data frame
   if (!is.data.frame(df)) {
     stop("Input must be a data frame containing columns: 'gridRef' and 'year'.")
@@ -143,39 +142,69 @@ extract_landcover_values <- function(type, df, crs = NULL) {
       message("Grid references contain both Irish and British National Grid coordinates.")
     }
 
-
+    #failedRef
+    failedRefs <- character()
     #Convert references to coordinates
     coords <- lapply(seq_along(refs), function(i) {
       ref <- refs[i]
       year <- years[i]
       if (isIrish[i]) {
-        result <- igr::igr_to_ig(ref) # Irish grid to coords
-        return(
-          data.frame(
-            gridRef = ref,
-            X_transformed = as.numeric(result[1]),
-            Y_transformed = as.numeric(result[2]),
-            gridType = "Irish Grid",
-            year = year
-          )
+        result <- tryCatch(
+          igr::igr_to_ig(ref),
+          error = function(e)
+            NULL
         )
+        if (!is.null(result) && length(result) == 2) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result[1]),
+              Y_transformed = as.numeric(result[2]),
+              gridType = "Irish Grid",
+              year = year
+            )
+          )
+        }
       } else if (isBritish[i]) {
-        result <- rnrfa::osg_parse(ref) # British grid reference to coords in BNG
-        return(
-          data.frame(
-            gridRef = ref,
-            X_transformed = as.numeric(result$easting),
-            Y_transformed = as.numeric(result$northing),
-            gridType = "British National Grid",
-            year = year
+        result <- tryCatch(
+          rnrfa::osg_parse(ref),
+          error = function(e)
+            NULL
+        ) # British grid reference to coords in BNG
+        if (!is.null(result) &&
+            all(c("easting", "northing") %in% names(result))) {
+          return(
+            data.frame(
+              gridRef = ref,
+              X_transformed = as.numeric(result$easting),
+              Y_transformed = as.numeric(result$northing),
+              gridType = "British National Grid",
+              year = year
+            )
           )
-        )
-      } else {
-        stop("Unrecognized grid reference: ", ref)
+        }
       }
+      #If we reach this point, log the failed ref
+      failedRefs <<- c(failedRefs, ref)
+      return(
+        data.frame(
+          gridRef = ref,
+          X_transformed = NA_real_,
+          Y_transformed = NA_real_,
+          gridType = NA_character_
+        )
+      )
     })
     #create dataframe
     resultDf <- as.data.frame(do.call(rbind, coords))
+    #Issue a warning if any failed
+    if (length(failedRefs) > 0) {
+      warning(
+        "Coordinates could not be returned for the following references: ",
+        paste(failedRefs, collapse = ", "),
+        ". NA values were returned instead."
+      )
+    }
   }
 
   #Download data from Zenodo

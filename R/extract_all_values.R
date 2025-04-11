@@ -93,16 +93,15 @@
 #' @export
 
 extract_all_values <- function(type,
-                       df,
-                       crs = NULL,
-                       soil = TRUE,
-                       soilprops = NULL,
-                       landcover = TRUE,
-                       climate = TRUE,
-                       climvar = c('tas', 'tasmin', 'tasmax', 'rain'),
-                       climtime = c('monthly', 'seasonal', 'annual'),
-                       annualstartmonth = NULL){
-
+                               df,
+                               crs = NULL,
+                               soil = TRUE,
+                               soilprops = NULL,
+                               landcover = TRUE,
+                               climate = TRUE,
+                               climvar = c('tas', 'tasmin', 'tasmax', 'rain'),
+                               climtime = c('monthly', 'seasonal', 'annual'),
+                               annualstartmonth = NULL) {
   #Checking inputs
   #Checking input is data frame
   if (!is.data.frame(df)) {
@@ -130,9 +129,9 @@ extract_all_values <- function(type,
     )
   }
   #Climate specific input checks
-  if(climate == TRUE){
+  if (climate == TRUE) {
     #Check if columns exist
-      required <- c("year", "month")
+    required <- c("year", "month")
     missing <- setdiff(required, colnames(df))
     if (length(missing) > 0) {
       stop(
@@ -144,31 +143,46 @@ extract_all_values <- function(type,
     valid_time_options <- c("annual", "seasonal", "monthly")
     if (!all(climtime %in% valid_time_options)) {
       invalid_time <- setdiff(climtime, valid_time_options)
-      stop(paste("Error: Invalid 'climtime' value(s):", paste(invalid_time, collapse = ", "),
-                 ". Must be one or more of 'annual', 'seasonal', or 'monthly'."))
+      stop(
+        paste(
+          "Error: Invalid 'climtime' value(s):",
+          paste(invalid_time, collapse = ", "),
+          ". Must be one or more of 'annual', 'seasonal', or 'monthly'."
+        )
+      )
     }
 
     #Validate 'climvar' input
     valid_climvars <- c("rain", "tas", "tasmin", "tasmax")
     if (!all(climvar %in% valid_climvars)) {
       invalid_climvar <- setdiff(climvar, valid_climvars)
-      stop(paste("Error: Invalid 'climvar' value(s):", paste(invalid_climvar, collapse = ", "),
-                 ". Must be one or more of 'rain', 'tas', 'tasmin', 'tasmax'."))
+      stop(
+        paste(
+          "Error: Invalid 'climvar' value(s):",
+          paste(invalid_climvar, collapse = ", "),
+          ". Must be one or more of 'rain', 'tas', 'tasmin', 'tasmax'."
+        )
+      )
     }
     #Validate 'annualstartmonth' requirement and range
     if ("annual" %in% climtime) {
       if (is.null(annualstartmonth)) {
-        stop("Error: 'annualstartmonth' must be provided when 'climtime' includes 'annual'.")
+        stop(
+          "Error: 'annualstartmonth' must be provided when 'climtime' includes 'annual'."
+        )
       }
-      if (!is.numeric(annualstartmonth) || annualstartmonth < 1 || annualstartmonth > 12) {
+      if (!is.numeric(annualstartmonth) ||
+          annualstartmonth < 1 || annualstartmonth > 12) {
         stop("Error: 'annualstartmonth' must be a numeric value between 1 and 12.")
       }
     } else if (!is.null(annualstartmonth)) {
-      warning("'annualstartmonth' is provided but 'climtime' does not include 'annual'. It will be ignored.")
+      warning(
+        "'annualstartmonth' is provided but 'climtime' does not include 'annual'. It will be ignored."
+      )
     }
   }
   #Land cover specific warnings
-  if(landcover == TRUE){
+  if (landcover == TRUE) {
     #check that year column exists
     required <- c("year")
     missing <- setdiff(required, colnames(df))
@@ -192,60 +206,63 @@ extract_all_values <- function(type,
     }
   }
   #no soil specific warnings as all covered and all properties will be downloaded
-  if(soil == TRUE){
-  #list all soil properties
-  allProp <- c(
-    "ocd",
-    #organic carbon desnity kg m-3
-    "bdod",
-    #bulk dens of fine earth fraction kg dm-3
-    "clay",
-    #clay (<0.002) in fine earth %
-    "cfvo",
-    #vol fraction of coarse fragments (>2mm) %
-    "sand",
-    #sand (> 0.05mm) in fine earth %
-    "silt",
-    #silt (0.002-0.05mm) in fine earth %
-    "wv0010",
-    #vol of water content at -10kPa (10-2cm3 cm-3)*10
-    "wv0033",
-    #vol of water content at -33kPa (10-2cm3 cm-3)*10
-    "wv1500",
-    #vol of water content at -1500kPa (10-2cm3 cm-3)*10
-    "cec",
-    #cation exchange capacity cmol(+)kg-1
-    "nitrogen",
-    #total nitrogen g kg-1
-    "phh2o",
-    #pH (H20)
-    "soc", #soil organic carbon in fine earth g kg-1,
-    "ocs" #organic carbon stocks kg m-2
-  )
-  #if no properties are entered, default is all
-  if (is.null(soilprops)) {
-    soilprops <- allProp
-  }
-  #Validate property input
-  if (!is.character(soilprops)) {
-    stop("Properties must be a character vector (e.g., c('clay', 'sand')) or a single string.")
-  }
-  invalprop <- setdiff(soilprops, allProp)
-  if (length(invalprop) > 0) {
-    warning(
-      'The following properties are not available and will be ignored: ',
-      paste(invalprop, collapse = ', ')
+  if (soil == TRUE) {
+    #list all soil properties
+    allProp <- c(
+      "ocd",
+      #organic carbon desnity kg m-3
+      "bdod",
+      #bulk dens of fine earth fraction kg dm-3
+      "clay",
+      #clay (<0.002) in fine earth %
+      "cfvo",
+      #vol fraction of coarse fragments (>2mm) %
+      "sand",
+      #sand (> 0.05mm) in fine earth %
+      "silt",
+      #silt (0.002-0.05mm) in fine earth %
+      "wv0010",
+      #vol of water content at -10kPa (10-2cm3 cm-3)*10
+      "wv0033",
+      #vol of water content at -33kPa (10-2cm3 cm-3)*10
+      "wv1500",
+      #vol of water content at -1500kPa (10-2cm3 cm-3)*10
+      "cec",
+      #cation exchange capacity cmol(+)kg-1
+      "nitrogen",
+      #total nitrogen g kg-1
+      "phh2o",
+      #pH (H20)
+      "soc",
+      #soil organic carbon in fine earth g kg-1,
+      "ocs" #organic carbon stocks kg m-2
     )
-    #remove any invalid
-    prop <- setdiff(soilprops, invalprop)
-  }
-  # Stop if no valid properties remain
-  if (length(soilprops) == 0) {
-    stop(
-      "No valid properties were selected. Please choose from: ",
-      paste(allProp, collapse = ", ")
-    )
-  }
+    #if no properties are entered, default is all
+    if (is.null(soilprops)) {
+      soilprops <- allProp
+    }
+    #Validate property input
+    if (!is.character(soilprops)) {
+      stop(
+        "Properties must be a character vector (e.g., c('clay', 'sand')) or a single string."
+      )
+    }
+    invalprop <- setdiff(soilprops, allProp)
+    if (length(invalprop) > 0) {
+      warning(
+        'The following properties are not available and will be ignored: ',
+        paste(invalprop, collapse = ', ')
+      )
+      #remove any invalid
+      prop <- setdiff(soilprops, invalprop)
+    }
+    # Stop if no valid properties remain
+    if (length(soilprops) == 0) {
+      stop(
+        "No valid properties were selected. Please choose from: ",
+        paste(allProp, collapse = ", ")
+      )
+    }
   }
   #Coordinates
   if (type == 'coords') {
@@ -272,7 +289,7 @@ extract_all_values <- function(type,
     } else {
       df$gridType <- ifelse(isIrish, "Irish Grid", "British National Grid")
     }
-    if(landcover){
+    if (landcover) {
       resultDf <- df[, c("X",
                          "Y",
                          "X_transformed",
@@ -280,7 +297,7 @@ extract_all_values <- function(type,
                          "gridType",
                          "year")]
     }
-    if(climate){
+    if (climate) {
       resultDf <- df[, c("X",
                          "Y",
                          "X_transformed",
@@ -289,12 +306,7 @@ extract_all_values <- function(type,
                          "year",
                          "month")]
     } else {
-      resultDf <- df[, c("X",
-                         "Y",
-                         "X_transformed",
-                         "Y_transformed",
-                         "gridType"
-      )]
+      resultDf <- df[, c("X", "Y", "X_transformed", "Y_transformed", "gridType")]
     }
   }
   #if type == grid references
@@ -315,6 +327,8 @@ extract_all_values <- function(type,
     if (any(isIrish) & any(isBritish)) {
       message("Grid references contain both Irish and British National Grid coordinates.")
     }
+    #failedRef
+    failedRefs <- character()
     #Convert references to coordinates
     coords <- lapply(seq_along(refs), function(i) {
       ref <- refs[i]
@@ -322,29 +336,13 @@ extract_all_values <- function(type,
       month <- months[i]
 
       if (isIrish[i]) {
-        result <- igr::igr_to_ig(ref) # Irish grid to coords
-        if(landcover && climate) {
-          return(
-            data.frame(
-              gridRef = ref,
-              X_transformed = as.numeric(result[1]),
-              Y_transformed = as.numeric(result[2]),
-              gridType = "Irish Grid",
-              year = year,
-              month = month)
-          )
-        }
-        if(landcover){
-          return(
-            data.frame(
-              gridRef = ref,
-              X_transformed = as.numeric(result[1]),
-              Y_transformed = as.numeric(result[2]),
-              gridType = "Irish Grid",
-              year = year
-            )
-          )}
-        if(climate){
+        result <- tryCatch(
+          igr::igr_to_ig(ref),
+          error = function(e)
+            NULL
+        )
+        if (!is.null(result) && length(result) == 2) {
+          if (landcover && climate) {
             return(
               data.frame(
                 gridRef = ref,
@@ -354,7 +352,31 @@ extract_all_values <- function(type,
                 year = year,
                 month = month
               )
-            )}else {
+            )
+          }
+          if (landcover) {
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "Irish Grid",
+                year = year
+              )
+            )
+          }
+          if (climate) {
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "Irish Grid",
+                year = year,
+                month = month
+              )
+            )
+          } else {
             return(
               data.frame(
                 gridRef = ref,
@@ -364,43 +386,51 @@ extract_all_values <- function(type,
               )
             )
           }
+        }
 
       } else if (isBritish[i]) {
-        result <- rnrfa::osg_parse(ref) # British grid reference to coords in BNG
-
-        if (landcover && climate) {
-          return(
-            data.frame(
-              gridRef = ref,
-              X_transformed = as.numeric(result[1]),
-              Y_transformed = as.numeric(result[2]),
-              gridType = "British National Grid",
-              year = year,
-              month = month
+        result <- tryCatch(
+          rnrfa::osg_parse(ref),
+          error = function(e)
+            NULL
+        ) # British grid reference to coords in BNG
+        if (!is.null(result) &&
+            all(c("easting", "northing") %in% names(result))) {
+          if (landcover && climate) {
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "British National Grid",
+                year = year,
+                month = month
+              )
             )
-          )
-        }
-        if(landcover){
-          return(
-            data.frame(
-              gridRef = ref,
-              X_transformed = as.numeric(result[1]),
-              Y_transformed = as.numeric(result[2]),
-              gridType = "British National Grid",
-              year = year
+          }
+          if (landcover) {
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "British National Grid",
+                year = year
+              )
             )
-          )}
-        if(climate){
-          return(
-            data.frame(
-              gridRef = ref,
-              X_transformed = as.numeric(result[1]),
-              Y_transformed = as.numeric(result[2]),
-              gridType = "British National Grid",
-              year = year,
-              month = month
+          }
+          if (climate) {
+            return(
+              data.frame(
+                gridRef = ref,
+                X_transformed = as.numeric(result[1]),
+                Y_transformed = as.numeric(result[2]),
+                gridType = "British National Grid",
+                year = year,
+                month = month
+              )
             )
-          )} else {
+          } else {
             return(
               data.frame(
                 gridRef = ref,
@@ -410,20 +440,36 @@ extract_all_values <- function(type,
               )
             )
           }
-      } else {
-        stop("Unrecognized grid reference: ", ref)
+        }
       }
+      #If we reach this point, log the failed ref
+      failedRefs <<- c(failedRefs, ref)
+      return(
+        data.frame(
+          gridRef = ref,
+          X_transformed = NA_real_,
+          Y_transformed = NA_real_,
+          gridType = NA_character_
+        )
+      )
     })
     #create dataframe
     resultDf <- as.data.frame(do.call(rbind, coords))
+    #Issue a warning if any failed
+    if (length(failedRefs) > 0) {
+      warning(
+        "Coordinates could not be returned for the following references: ",
+        paste(failedRefs, collapse = ", "),
+        ". NA values were returned instead."
+      )
+    }
   }
-
   ##Determine what region is needed
   dlNI <- "Irish Grid" %in% resultDf$gridType
   dlUK <- "British National Grid" %in% resultDf$gridType
 
   #soils
-  if(soil){
+  if (soil) {
     #list all soil properties
     prop <- soilprops
     #Download data from Zenodo
@@ -448,7 +494,10 @@ extract_all_values <- function(type,
           message("Downloaded: ", fileNameNI)
           rastList[[paste0("ni_", p)]] <- rast(tempNI)
         }, error = function(e) {
-          warning("Failed to download: ", fileNameNI, ". Error: ", e$message)
+          warning("Failed to download: ",
+                  fileNameNI,
+                  ". Error: ",
+                  e$message)
         })
       }
       #UK
@@ -462,7 +511,10 @@ extract_all_values <- function(type,
           message("Downloaded: ", fileNameUK)
           rastList[[paste0("uk_", p)]] <- rast(tempUK)
         }, error = function(e) {
-          warning("Failed to download: ", fileNameUK, ". Error: ", e$message)
+          warning("Failed to download: ",
+                  fileNameUK,
+                  ". Error: ",
+                  e$message)
         })
       }
     }
@@ -504,7 +556,7 @@ extract_all_values <- function(type,
     # unlink(tempDir, recursive=TRUE)
   }
   #land cover
-  if(landcover){
+  if (landcover) {
     #list years from df
     yearstot <- sort(unique(resultDf$year))
     #Download data from Zenodo
@@ -580,7 +632,7 @@ extract_all_values <- function(type,
     #  unlink(tempDir, recursive=TRUE)
   }
   #climate
-  if(climate){
+  if (climate) {
     #Extract earliest and latest year & month from resultDf
     minYear <- min(as.numeric(df$year))
     maxYear <- max(as.numeric(df$year))
@@ -635,7 +687,9 @@ extract_all_values <- function(type,
     #initalise years for dl rasters
     inputYears <- final_startyear:final_endyear
     #Generate possible layer names based on selected climate variables and date range
-    lyears <- seq(as.integer(final_startyear), as.integer(final_endyear), by = 1)
+    lyears <- seq(as.integer(final_startyear),
+                  as.integer(final_endyear),
+                  by = 1)
     lmonths <- sprintf("%02d", 1:12)
     datecombo <- expand.grid(lyears, lmonths)
     datecombo <- apply(datecombo, 1, function(x)
@@ -674,7 +728,10 @@ extract_all_values <- function(type,
           tempNI <- tempNI[[matching]]
           rastList[[paste0("ni_", y)]] <- tempNI
         }, error = function(e) {
-          warning("Failed to download: ", fileNameNI, ". Error: ", e$message)
+          warning("Failed to download: ",
+                  fileNameNI,
+                  ". Error: ",
+                  e$message)
         })
       }
       if (dlUK) {
@@ -690,7 +747,10 @@ extract_all_values <- function(type,
           tempUK <- tempUK[[matching]]
           rastList[[paste0("uk_", y)]] <- tempUK
         }, error = function(e) {
-          warning("Failed to download: ", fileNameUK, ". Error: ", e$message)
+          warning("Failed to download: ",
+                  fileNameUK,
+                  ". Error: ",
+                  e$message)
         })
       }
     }
@@ -712,7 +772,8 @@ extract_all_values <- function(type,
         for (var in climvar) {
           layerName <- paste0(var, "_", rowYear, "_", rowMonth)
 
-          if (dlNI & paste0('ni_', rowYear) %in% names(monthlyList)) {
+          if (dlNI &
+              paste0('ni_', rowYear) %in% names(monthlyList)) {
             niRast <- monthlyList[[paste0('ni_', rowYear)]]
             if (layerName %in% names(niRast) &&
                 resultDf$gridType[i] == "Irish Grid") {
@@ -721,7 +782,8 @@ extract_all_values <- function(type,
             }
           }
 
-          if (dlUK & paste0('uk_', rowYear) %in% names(monthlyList)) {
+          if (dlUK &
+              paste0('uk_', rowYear) %in% names(monthlyList)) {
             ukRast <- monthlyList[[paste0('uk_', rowYear)]]
             if (layerName %in% names(ukRast) &&
                 resultDf$gridType[i] == "British National Grid") {
@@ -851,7 +913,9 @@ extract_all_values <- function(type,
             parts <- unlist(strsplit(timerange, "_"))
             startym <- parts[1]
             endym <- parts[2]
-            rowym_num <- as.numeric(paste0(rowYear, sprintf("%02d", as.numeric(rowMonth))))  #Convert row to YYYYMM
+            rowym_num <- as.numeric(paste0(rowYear, sprintf(
+              "%02d", as.numeric(rowMonth)
+            )))  #Convert row to YYYYMM
             if (rowym_num >= startym & rowym_num <= endym) {
               matchingLayer <- layer
               break
@@ -907,16 +971,18 @@ extract_all_values <- function(type,
         getPrevSeasons <- function(rowSeason) {
           seasonOrder <- c("winter", "spring", "summer", "autumn")
           season_index <- match(rowSeason, seasonOrder)
-          prevSeasons <- c(
-            seasonOrder[season_index],
-            #Current season
-            seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
-            # -1 season
-            seasonOrder[ifelse(season_index - 2 < 1, 4 + (season_index - 2), season_index - 2)],
-            # -2 seasons
-            seasonOrder[ifelse(season_index - 3 < 1, 4 + (season_index - 3), season_index - 3)]  # -3 seasons)
-          )
-          return(prevSeasons)
+          prevSeasons <- c(seasonOrder[season_index],
+                           #Current season
+                           seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
+                           # -1 season
+                           seasonOrder[ifelse(season_index - 2 < 1,
+                                              4 + (season_index - 2),
+                                              season_index - 2)],
+                           # -2 seasons
+                           seasonOrder[ifelse(season_index - 3 < 1,
+                                              4 + (season_index - 3),
+                                              season_index - 3)]  # -3 seasons))
+                           return(prevSeasons)
         }
         #validating available seasons
         for (y in unique(years)) {
@@ -991,7 +1057,8 @@ extract_all_values <- function(type,
                 #If this season is winter, shift it back a year
                 seasonY1 <- rowYear - 1
                 seasonY2 <- rowYear
-              } else if (season == "autumn" && "winter" %in% seasonList[1:season_index]) {
+              } else if (season == "autumn" &&
+                         "winter" %in% seasonList[1:season_index]) {
                 #If winter already happened, autumn must be in the previous year
                 seasonY1 <- rowYear - 1
                 seasonY2 <- rowYear - 1
