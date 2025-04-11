@@ -93,9 +93,8 @@ fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
 
     #warn user about changing timeout time if choosing uk
     if(reg == 'uk'){
-      message(paste('The UK climate datasets are very large files. Increasing time out to 300 seconds.'))
-      message(paste('You may need to increase it further to ensure full download by running options(timeout = x).'))
-      options(timeout = 300)
+      message(paste('The UK climate datasets are very large files.'))
+      message(paste('You may need to increase the timeout to ensure full download by running options(timeout = x).'))
     }
     #download
     tryCatch({
