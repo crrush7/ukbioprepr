@@ -67,7 +67,7 @@ fetch_landcover_raster <- function(reg, startyear, endyear) {
   #warn user about aggregated classes
   useagg <- startyear < 2015
   if (useagg) {
-    warning(
+    message(
       'As your start year is before 2015, the output rasters will have aggregated land cover classes.
             Full land cover classes are available for years 2015 - 2023.'
     )
@@ -89,17 +89,24 @@ fetch_landcover_raster <- function(reg, startyear, endyear) {
     }
     fileUrl <- paste0(baseUrl, fileName)
     temp <- file.path(tempDir, fileName)
-
+    #Check if exists
+    if (!file.exists(temp)){
     #download the files
     tryCatch({
       download.file(fileUrl, temp, mode = "wb")
       message("Downloaded: ", fileName)
-
-      #store raster in list
-      rastList[[as.character(y)]] <- rast(temp)
     }, error = function(e) {
       warning("Failed to download: ", fileName, ". Error: ", e$message)
     })
+    } else {
+    message("File already downloaded during this session ", fileName, " - using cached version.")
+    }
+    if(file.exists(temp)){
+      #store raster in list
+      rastList[[as.character(y)]] <- rast(temp)
+    } else {
+      warning("File missing after attempted download: ", fileName)
+    }
   }
   #return raster if only one in list
   if (length(rastList) == 1) {
