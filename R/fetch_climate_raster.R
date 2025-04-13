@@ -36,7 +36,7 @@
 # Returns:
 #' @return  A subset raster of the selected climate variable, time parameter and date range at 1km resolution.
 #' @export
-fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
+fetch_climate_raster <- function(reg, cv, start, end, time, agg=NULL) {
 
   #Validate region
   if (!reg %in% c("uk", "ni")) {
@@ -52,28 +52,35 @@ fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
   if (!time %in% c("monthly", "seasonal", "annual")) {
     stop("Invalid time choice. Please choose 'monthly', 'seasonal' or 'annual'.")
   }
-  #Validate aggregation function choice
-  if (time %in% c("seasonal", "annual") & missing(agg)) {
-    #Set default aggregation based on cv
-    agg <- switch(cv,
-                  "rain" = "sum",
-                  "tas" = "mean",
-                  "tasmax" = "max",
-                  "tasmin" = "min",
-                  stop("Please choose a function to aggregate the monthly data or provide a valid cv."))
+  #Handle agg depending on time
+  if (time == "monthly") {
+    if (!is.null(agg)) {
+      message("Aggregation function is not needed for monthly data and will be ignored.")
+    }
+    aggFunct <- NULL
+  } else {
+    #Set default agg if not provided
+    if (is.null(agg)) {
+      agg <- switch(cv,
+                    "rain" = "sum",
+                    "tas" = "mean",
+                    "tasmax" = "max",
+                    "tasmin" = "min")
+    }
+
+    #Validate agg value
+    if (!agg %in% c("mean", "max", "min", "sum")) {
+      stop("Invalid aggregation. Choose from 'mean', 'max', 'min', or 'sum'.")
+    }
+
+    #Assign actual function
+    aggFunct <- switch(agg,
+                       "mean" = mean,
+                       "max" = max,
+                       "min" = min,
+                       "sum" = sum)
   }
 
-  #Check if the user-provided or default agg is valid
-  if (!agg %in% c("mean", "max", "min", "sum")) {
-    stop("Invalid function choice. Please enter 'mean', 'max', 'min' or 'sum'.")
-  }
-
-  #Assign the correct aggregation function
-  aggFunct <- switch(agg,
-                     "min" = min,
-                     "max" = max,
-                     "sum" = sum,
-                     "mean" = mean)
 
   #check if start and end is in correct format
   if (!grepl("^\\d{4}_\\d{2}$", start) ||
@@ -89,13 +96,15 @@ fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
     link <- paste0(baseUrl, name)
 
     #temp file location
-    temp <- tempfile(fileext = ".nc")
-
+    tempDir <- tempdir()
+    temp <- file.path(tempDir, name)
     #warn user about changing timeout time if choosing uk
     if(reg == 'uk'){
       message(paste('The UK climate datasets are very large files.'))
       message(paste('You may need to increase the timeout to ensure full download by running options(timeout = x).'))
     }
+    #Check if file exists
+    if(!file.exists(temp)){
     #download
     tryCatch({
       download.file(link, temp, mode = "wb")
@@ -103,7 +112,9 @@ fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
     }, error = function(e) {
       stop("Download failed: ", e$message)
     })
-
+    } else {
+      message("File already downloaded during this session ", name, " - using cached version.")
+    }
     #Load as spatraster
     cvraster <- rast(temp)
     return(cvraster)
@@ -208,3 +219,5 @@ fetch_climate_raster <- function(reg, cv, start, end, time = 'monthly', agg) {
   }
   return(inRangeRast)
 }
+test1 <- fetch_climate_raster('ni', 'rain', '2000_01', '2000_12', time = 'monthly', agg = 'mean')
+test2 <- fetch_climate_raster('ni', 'rain', '2001_01', '2001_12', time = 'monthly')
