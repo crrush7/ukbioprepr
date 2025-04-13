@@ -245,13 +245,24 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
       fileUrlNI <- paste0(baseUrl, fileNameNI)
       tempNI <- file.path(tempDir, fileNameNI)
 
-      tryCatch({
-        download.file(fileUrlNI, tempNI, mode = "wb")
-        message("Downloaded: ", fileNameNI)
+      #check if file exists first
+      if (!file.exists(tempNI)) {
+        tryCatch({
+          download.file(fileUrlNI, tempNI, mode = "wb")
+          message("Downloaded: ", fileNameNI)
+        }, error = function(e) {
+          warning("Failed to download: ", fileNameNI, ". Error: ", e$message)
+        })
+      } else {
+        message("File already downloaded this session: ", fileNameNI, " — using cached version.")
+      }
+
+      #Load the raster whether it was downloaded or already existed
+      if (file.exists(tempNI)) {
         rastList[[paste0("ni_", p)]] <- rast(tempNI)
-      }, error = function(e) {
-        warning("Failed to download: ", fileNameNI, ". Error: ", e$message)
-      })
+      } else {
+        warning("File missing after attempted download: ", fileNameNI)
+      }
     }
     #UK
     if (dlUK) {
@@ -259,16 +270,26 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
       fileUrlUK <- paste0(baseUrl, fileNameUK)
       tempUK <- file.path(tempDir, fileNameUK)
 
-      tryCatch({
-        download.file(fileUrlUK, tempUK, mode = "wb")
-        message("Downloaded: ", fileNameUK)
-        rastList[[paste0("uk_", p)]] <- rast(tempUK)
-      }, error = function(e) {
-        warning("Failed to download: ", fileNameUK, ". Error: ", e$message)
-      })
-    }
-  }
+      #Check if file exists first
+      if (!file.exists(tempUK)) {
+        tryCatch({
+          download.file(fileUrlUK, tempUK, mode = "wb")
+          message("Downloaded: ", fileNameUK)
+        }, error = function(e) {
+          warning("Failed to download: ", fileNameUK, ". Error: ", e$message)
+        })
+      } else {
+        message("File already downloaded this session: ", fileNameUK, " — using cached version.")
+      }
 
+      #Load the raster whether it was downloaded or already existed
+      if (file.exists(tempUK)) {
+        rastList[[paste0("uk_", p)]] <- rast(tempUK)
+      } else {
+        warning("File missing after attempted download: ", fileNameUK)
+      }
+    }
+}
   #Extract soil data
   for (p in prop) {
     if (dlNI & paste0("ni_", p) %in% names(rastList)) {

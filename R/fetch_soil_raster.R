@@ -66,7 +66,8 @@ fetch_soil_raster <- function(reg, prop = NULL) {
     #total nitrogen g kg-1
     "phh2o",
     #pH (H20)
-    "soc" #soil organic carbon in fine earth g kg-1
+    "soc", #soil organic carbon in fine earth g kg-1
+    "ocs" #organic carbon stocks kg m-2
   )
   #if no properties are entered, default is all
   if (is.null(prop)) {
@@ -87,12 +88,6 @@ fetch_soil_raster <- function(reg, prop = NULL) {
     prop <- setdiff(prop, invalprop)
   }
 
-  if (!prop %in% allProp) {
-    stop(
-      "No valid properties were selected. Please choose from: ",
-      paste(allProp, collapse = ", ")
-    )
-  }
   #temp directory that lasts for session
   tempDir <- tempdir()
 
@@ -105,17 +100,24 @@ fetch_soil_raster <- function(reg, prop = NULL) {
     fileUrl <- paste0(baseUrl, fileName)
     temp <- file.path(tempDir, fileName)
 
+    #Check if file exists first
+    if (!file.exists(temp)) {
     #download the files
     tryCatch({
       download.file(fileUrl, temp, mode = "wb")
       message("Downloaded: ", fileName)
-
-      #store raster in list
-      rastList[[p]] <- rast(temp)
     }, error = function(e) {
       warning("Failed to download: ", fileName, ". Error: ", e$message)
     })
-  }
+    } else {
+    message("File already downloaded during this session ", fileName, " - using cached version.")
+    }
+    if(file.exists(temp)){
+      rastList[[p]] <- rast(temp)
+    } else {
+      warning("File missing after attempted download: ", fileName)
+    }
+}
   #return raster if only one in list
   if (length(rastList) == 1) {
     return(rastList[[1]])
