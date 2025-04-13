@@ -191,7 +191,8 @@ extract_landcover_values <- function(type, df, crs = NULL) {
           gridRef = ref,
           X_transformed = NA_real_,
           Y_transformed = NA_real_,
-          gridType = NA_character_
+          gridType = NA_character_,
+          year = year
         )
       )
     })
@@ -231,14 +232,22 @@ extract_landcover_values <- function(type, df, crs = NULL) {
     fileName <- paste0(year, region, suffix, ".tif")
     fileUrl <- paste0(baseUrl, fileName)
     tempPath <- file.path(tempDir, fileName)
-
+    #Check if exists
+    if (!file.exists(tempPath)){
     tryCatch({
       download.file(fileUrl, tempPath, mode = "wb")
       message("Downloaded: ", fileName)
-      r <- terra::rast(tempPath)
     }, error = function(e) {
       warning("Failed to download: ", fileName, ". Error: ", e$message)
     })
+    } else {
+      message("File already downloaded during this session ", fileName, " - using cached version.")
+    }
+    if(file.exists(tempPath)){
+      r <- terra::rast(tempPath)
+    } else {
+      warning("File missing after attempted download: ", fileName)
+    }
     return(r)
   }
 
@@ -254,8 +263,12 @@ extract_landcover_values <- function(type, df, crs = NULL) {
   message("Performing land cover extractions. Please be patient.")
   for (i in seq_len(nrow(resultDf))) {
     y <- resultDf$year[i]  #Year associated with the coordinate
+    rowRef <- resultDf$gridRef[i]
+    #skip if any NA values
+    if (anyNA(c(y, rowRef))) next
     #NI
     if (resultDf$gridType[i] == "Irish Grid" &&
+        !is.na(resultDf$gridType[i]) &&
         paste0("ni_", y) %in% names(rastList)) {
       niRast <- rastList[[paste0("ni_", y)]]
       extractedNI <- terra::extract(niRast, resultDf[i, c("X_transformed", "Y_transformed")])[, -1]  #Remove cell ID
@@ -269,6 +282,7 @@ extract_landcover_values <- function(type, df, crs = NULL) {
 
     #UK
     if (resultDf$gridType[i] == "British National Grid" &&
+        !is.na(resultDf$gridType[i]) &&
         paste0("uk_", y) %in% names(rastList)) {
       ukRast <- rastList[[paste0("uk_", y)]]
       extractedUK <- terra::extract(ukRast, resultDf[i, c("X_transformed", "Y_transformed")])[, -1]  #Remove cell ID
