@@ -314,7 +314,7 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
         extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")])[, -1]
         #some rasters have one layer
         if (is.vector(extractedUK)) {
-          extractedNI <- data.frame(extractedNI)
+          extractedUK <- data.frame(extractedUK)
         }
         #Get layer names for columns
         colnames(extractedUK) <- paste0(p, "_", names(ukRast))
@@ -326,3 +326,4 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
 
   return(resultDf)
 }
+test1soil <- extract_soil_values('grid', refs, prop = c('phh2o', 'cec'))
