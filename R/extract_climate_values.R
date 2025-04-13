@@ -294,7 +294,9 @@ extract_climate_values <- function(type,
           gridRef = ref,
           X_transformed = NA_real_,
           Y_transformed = NA_real_,
-          gridType = NA_character_
+          gridType = NA_character_,
+          year = year,
+          month = month
         )
       )
     })
@@ -323,7 +325,7 @@ extract_climate_values <- function(type,
   }
 
   #temp directory
-  tempDir <- ? tempdir()
+  tempDir <- tempdir()
 
   #initialise list
   rastList <- list()
@@ -335,33 +337,57 @@ extract_climate_values <- function(type,
       fileNameNI <- paste0("ni_climate_", y, ".nc")
       fileUrlNI <- paste0(baseUrl, fileNameNI)
       tempNI <- file.path(tempDir, fileNameNI)
-
-      tryCatch({
-        download.file(fileUrlNI, tempNI, mode = "wb")
-        message("Downloaded: ", fileUrlNI)
+      if (!file.exists(tempNI)) {
+        tryCatch({
+          download.file(fileUrlNI, tempNI, mode = "wb")
+          message("Downloaded: ", fileUrlNI)
+        }, error = function(e) {
+          warning("Failed to download: ",
+                  fileNameNI,
+                  ". Error: ",
+                  e$message)
+        })
+      } else {
+        message(
+          "File already downloaded during ths session ",
+          fileNameNI,
+          " - using cached version."
+        )
+      }
+      if (file.exists(tempNI)) {
         tempNI <- rast(tempNI)
         matching <- names(tempNI)[names(tempNI) %in% lnames]
         tempNI <- tempNI[[matching]]
         rastList[[paste0("ni_", y)]] <- tempNI
-      }, error = function(e) {
-        warning("Failed to download: ", fileNameNI, ". Error: ", e$message)
-      })
+      }
     }
     if (dlUK) {
       fileNameUK <- paste0("uk_climate_", y, ".nc")
       fileUrlUK <- paste0(baseUrl, fileNameUK)
       tempUK <- file.path(tempDir, fileNameUK)
-
-      tryCatch({
-        download.file(fileUrlUK, tempUK, mode = "wb")
-        message("Downloaded: ", fileUrlUK)
+      if (!file.exists(tempUK)) {
+        tryCatch({
+          download.file(fileUrlUK, tempUK, mode = "wb")
+          message("Downloaded: ", fileUrlUK)
+        }, error = function(e) {
+          warning("Failed to download: ",
+                  fileNameUK,
+                  ". Error: ",
+                  e$message)
+        })
+      } else {
+        message(
+          "File already downloaded during this session ",
+          fileNameUK,
+          " - using cached version."
+        )
+      }
+      if (file.exists(tempUK)) {
         tempUK <- rast(tempUK)
         matching <- names(tempUK)[names(tempUK) %in% lnames]
         tempUK <- tempUK[[matching]]
         rastList[[paste0("uk_", y)]] <- tempUK
-      }, error = function(e) {
-        warning("Failed to download: ", fileNameUK, ". Error: ", e$message)
-      })
+      }
     }
   }
   annualseasonList <- list()
@@ -378,6 +404,9 @@ extract_climate_values <- function(type,
     for (i in seq_len(nrow(resultDf))) {
       rowYear <- resultDf$year[i]
       rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
+      rowRef <- resultDf$gridRef[i]
+      #skip if NA values
+      if (anyNA(c(rowYear, rowMonth, rowRef))) next
 
       for (var in climvar) {
         layerName <- paste0(var, "_", rowYear, "_", rowMonth)
@@ -385,6 +414,7 @@ extract_climate_values <- function(type,
         if (dlNI & paste0('ni_', rowYear) %in% names(monthlyList)) {
           niRast <- monthlyList[[paste0('ni_', rowYear)]]
           if (layerName %in% names(niRast) &&
+              !is.na(resultDf$gridType[i]) &&
               resultDf$gridType[i] == "Irish Grid") {
             extractedVal <- terra::extract(niRast[[layerName]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
             resultDf[i, paste0("monthly_", var)] <- extractedVal
@@ -394,6 +424,7 @@ extract_climate_values <- function(type,
         if (dlUK & paste0('uk_', rowYear) %in% names(monthlyList)) {
           ukRast <- monthlyList[[paste0('uk_', rowYear)]]
           if (layerName %in% names(ukRast) &&
+              !is.na(resultDf$gridType[i]) &&
               resultDf$gridType[i] == "British National Grid") {
             extractedVal <- terra::extract(ukRast[[layerName]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
             resultDf[i, paste0("monthly_", var)] <- extractedVal
@@ -496,11 +527,16 @@ extract_climate_values <- function(type,
     for (i in seq_len(nrow(resultDf))) {
       rowYear <- resultDf$year[i]
       rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
+      rowRef <- resultDf$gridRef[i]
+      #skip if NA values
+      if (anyNA(c(rowYear, rowMonth, rowRef))) next
       rowym <- paste(rowYear, "_", rowMonth)
       #Determine if uk or ni
-      if (resultDf$gridType[i] == 'Irish Grid') {
+      if (resultDf$gridType[i] == 'Irish Grid' &&
+          !is.na(resultDf$gridType[i])) {
         region_prefix <- "ni_"
-      } else if (resultDf$gridType[i] == 'British National Grid') {
+      } else if (resultDf$gridType[i] == 'British National Grid' &&
+                 !is.na(resultDf$gridType[i])) {
         region_prefix <- "uk_"
       } else {
         next  #Skip if grid type is unknown
@@ -539,10 +575,32 @@ extract_climate_values <- function(type,
   }
 
   #handling if seasonal is selected
-  if ('seasonal' %in% time) {
+  if('seasonal' %in% time) {
     seasonalRastList <- list()
-    #get env names from list
-    for (rastName in names(aRastList)) {
+
+    #function to determine the correct season year range
+    getSeasonYears <- function(rowYear, rowMonth, season) {
+      if (season == "winter") {
+        if (as.numeric(rowMonth) == 12) {
+          seasonY1 <- rowYear
+        } else {
+          seasonY1 <- rowYear - 1
+        }
+        seasonY2 <- seasonY1 + 1
+      } else {
+        season_start_month <- min(seasonsDef[[season]])
+        if (season_start_month > as.numeric(rowMonth)) {
+          seasonY1 <- rowYear - 1
+        } else {
+          seasonY1 <- rowYear
+        }
+        seasonY2 <- seasonY1
+      }
+      return(c(seasonY1, seasonY2))
+    }
+
+    #Get env names from list
+    for(rastName in names(aRastList)) {
       x <- aRastList[[rastName]]
       envVar <- sub("^(uk_|ni_)", "", rastName)
       seasonalRasts <- list()
@@ -550,7 +608,7 @@ extract_climate_values <- function(type,
       yearMonth <- do.call(rbind, strsplit(layerNames, "_"))
       years <- as.numeric(yearMonth[, 1])
       months <- as.numeric(yearMonth[, 2])
-      #determine aggregate function for creating annual rast
+
       aggFunct <- switch(
         envVar,
         "tasmin" = min,
@@ -559,7 +617,7 @@ extract_climate_values <- function(type,
         "tas" = mean,
         mean
       )
-      #functions for season
+
       findSeason <- function(month) {
         month <- as.numeric(month)
         for (season in names(seasonsDef)) {
@@ -568,107 +626,76 @@ extract_climate_values <- function(type,
         }
         return(NA)
       }
+
       getPrevSeasons <- function(rowSeason) {
         seasonOrder <- c("winter", "spring", "summer", "autumn")
         season_index <- match(rowSeason, seasonOrder)
-        prevSeasons <- c(seasonOrder[season_index],
-                         #Current season
-                         seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
-                         # -1 season
-                         seasonOrder[ifelse(season_index - 2 < 1, 4 + (season_index - 2), season_index - 2)],
-                         # -2 seasons
-                         seasonOrder[ifelse(season_index - 3 < 1, 4 + (season_index - 3), season_index - 3)]  # -3 seasons))
-                         return(prevSeasons)
+        prevSeasons <- c(
+          seasonOrder[season_index],
+          seasonOrder[ifelse(season_index - 1 < 1, 4, season_index - 1)],
+          seasonOrder[ifelse(season_index - 2 < 1, 4 + (season_index - 2), season_index - 2)],
+          seasonOrder[ifelse(season_index - 3 < 1, 4 + (season_index - 3), season_index - 3)]
+        )
+        return(prevSeasons)
       }
+
       message("Extracting seasonal values.")
-      #validating available seasons
-      for (y in unique(years)) {
-        for (season in names(seasonsDef)) {
+      for(y in unique(years)) {
+        for(season in names(seasonsDef)) {
           seasonMonths <- seasonsDef[[season]]
-          #winter spans two calendar years
-          if (season == "winter") {
-            seasonLayers <- which((years == y &
-                                     months == 12) |
-                                    (years == (y + 1) &
-                                       months %in% c(1, 2)))
+          if(season == "winter") {
+            seasonLayers <- which((years == y & months == 12) | (years == (y + 1) & months %in% c(1, 2)))
             seasonYear <- paste0(y, "_", y + 1)
           } else {
             seasonLayers <- which(years == y & months %in% seasonMonths)
             seasonYear <- paste0(y, "_", y)
           }
-          #Checking dates
-          if (length(seasonLayers) < 3) {
-            warning(paste('Incomplete', season, 'in year', y, '- skipping.'))
+
+          if(length(seasonLayers) < 3) {
             next
           }
+
           seasonalRast <- app(x[[seasonLayers]], aggFunct, na.rm = TRUE)
           names(seasonalRast) <- paste0(envVar, "_", season, "_", seasonYear)
           seasonalRasts <- c(seasonalRasts, seasonalRast)
         }
       }
-      if (length(seasonalRasts) == 0) {
-        stop('No complete seasonal data availble for selected date range.')
+
+      if(length(seasonalRasts) == 0) {
+        stop('No complete seasonal data available for selected date range.')
       }
       inRangeRast <- do.call(c, seasonalRasts)
       seasonalRastList[[rastName]] <- inRangeRast
     }
-    #extract seasonal data using the new list of rasters
-    #extract for current season and three previous
-    #every row has a value for every season
-    #loop through
-    for (i in seq_len(nrow(resultDf))) {
-      rowYear <- as.numeric(resultDf$year[i])
-      rowMonth <- resultDf$month[i]
+
+    print(names(seasonalRastList))
+
+    for(i in seq_len(nrow(resultDf))) {
+      rowYear <- resultDf$year[i]
+      rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
+      rowRef <- resultDf$gridRef[i]
+      if (anyNA(c(rowYear, rowMonth, rowRef))) next
       rowSeason <- findSeason(rowMonth)
       seasonList <- getPrevSeasons(rowSeason)
 
-      regPrefix <- ifelse(resultDf$gridType[i] == 'Irish Grid', 'ni_', 'uk_')
+      regPrefix <- if(!is.na(resultDf$gridType[i]) && resultDf$gridType[i] == 'Irish Grid') 'ni_' else 'uk_'
 
-      for (cv in climvar) {
+      for(cv in climvar) {
         rasterName <- paste0(regPrefix, cv)
         if (!rasterName %in% names(seasonalRastList)) {
           warning(paste("No raster found for ", rasterName))
           next
         }
         raster <- seasonalRastList[[rasterName]]
-        for (season_index in seq_along(seasonList)) {
-          season <- seasonList[season_index]
 
-          #Determine the base year for the first season
-          if (season_index == 1) {
-            if (season == "winter") {
-              #Winter spans two years: Dec (prev year) + Jan-Feb (curr year)
-              seasonY1 <- ifelse(rowMonth == 12, rowYear, rowYear - 1)
-              seasonY2 <- seasonY1 + 1
-            } else {
-              seasonY1 <- rowYear
-              seasonY2 <- rowYear
-            }
-          } else {
-            #If winter was the first season, shift all others back one year
-            if (seasonList[1] == "winter") {
-              seasonY1 <- rowYear - 1
-              seasonY2 <- rowYear - 1
-            } else if (season == "winter") {
-              #If this season is winter, shift it back a year
-              seasonY1 <- rowYear - 1
-              seasonY2 <- rowYear
-            } else if (season == "autumn" &&
-                       "winter" %in% seasonList[1:season_index]) {
-              #If winter already happened, autumn must be in the previous year
-              seasonY1 <- rowYear - 1
-              seasonY2 <- rowYear - 1
-            } else {
-              #Default case: use the same year as rowYear
-              seasonY1 <- rowYear
-              seasonY2 <- rowYear
-            }
-          }
+        for(season in seasonList) {
+          years <- getSeasonYears(rowYear, rowMonth, season)
+          seasonY1 <- years[1]
+          seasonY2 <- years[2]
 
-          #Construct the correct seasonal layer name
           seasonLayerName <- paste(cv, season, seasonY1, seasonY2, sep = "_")
 
-          if (seasonLayerName %in% names(raster)) {
+          if(seasonLayerName %in% names(raster)) {
             extractVal <- terra::extract(raster[[seasonLayerName]], resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)
             resultDf[i, paste0(season, "_", cv)] <- extractVal
           } else {
@@ -678,6 +705,7 @@ extract_climate_values <- function(type,
       }
     }
   }
+
 
   return(resultDf)
 }
