@@ -114,7 +114,9 @@ extract_climate_values <- function(type,
       "'annualstartmonth' is provided but 'time' does not include 'annual'. It will be ignored."
     )
   }
-
+if (!all(as.numeric(df$month) %in% 1:12)) {
+  stop("The 'month' column must only contain numeric values from 1 to 12.")
+}
 
   #Define standard seasons
   seasonsDef <- list(
@@ -125,7 +127,7 @@ extract_climate_values <- function(type,
   )
 
 
-  #Extract earliest and latest year & month from resultDf
+  #Extract earliest and latest year & month from df
   minYear <- min(as.numeric(df$year))
   maxYear <- max(as.numeric(df$year))
   minMonth <- min(as.numeric(df$month[df$year == minYear]))
@@ -137,34 +139,94 @@ extract_climate_values <- function(type,
   endyear <- maxYear
   endmonth <- maxMonth
 
-  #Adjust for seasonal and annual data
-  if ("seasonal" %in% time | "annual" %in% time) {
-    if (startmonth != 12) {
+  #Seasonal Only
+  if ("seasonal" %in% time && !("annual" %in% time)) {
+    #Adjust for full seasons based on input data
+    if (minMonth <= 2 | minMonth == 12) {
+      startmonth <- 3  # Winter
+    } else if (minMonth <= 5) {
+      startmonth <- 6  # Spring
+    } else if (minMonth <= 8) {
+      startmonth <- 9  # Summer
+    } else {
+      startmonth <- 12  # Autumn
+    }
+    #Adjust end month similarly
+    if (maxMonth == 1 | maxMonth == 12 | maxMonth == 2) {
+      endmonth <- 2  # Include full winter
+    } else if (maxMonth <= 5) {
+      endmonth <- 5  # Include full spring
+    } else if (maxMonth <= 8) {
+      endmonth <- 8  # Include full summer
+    } else {
+      endmonth <- 11  # Include full autumn
+    }
+
+    #Set start and end year accordingly
+    if (minMonth == 12) {
+      endyear <- endyear + 1
+      startyear <- startyear - 2
+    } else {
       startyear <- startyear - 1
-    }
-    if (endmonth %in% c(11, 12)) {
-      endyear <- endyear + 1
-    }
+      endyear <- endyear}
   }
-
-  #Adjust for annual data
-  if ("annual" %in% time) {
+  #Annual Only
+  if ("annual" %in% time && !("seasonal" %in% time)) {
     startmonth <- annualstartmonth
-    endmonth <- ifelse(startmonth == 1, 12, startmonth - 1)
-
+    endmonth <- ifelse(annualstartmonth == 12, 1, annualstartmonth - 1)
     #If the annual period spans two calendar years, adjust endyear
-    if (startmonth > endmonth) {
-      endyear <- endyear + 1
+    if(minMonth < startmonth){
+    startyear <- startyear - 1}
+    if(maxMonth > endmonth)
+    endyear <- endyear + 1
     }
+  #Annual and seasonal
+  if ('annual' %in% time && 'seasonal' %in% time){
+    #adjust for full seasons based on data
+    if (minMonth <= 2 | minMonth == 12) {
+      seasonal_startmonth <- 3  # Winter
+    } else if (minMonth <= 5) {
+      seasonal_startmonth <- 6  # Spring
+    } else if (minMonth <= 8) {
+      seasonal_startmonth <- 9  # Summer
+    } else {
+      seasonal_startmonth <- 12  # Autumn
+    }
+
+    if (maxMonth == 1 | maxMonth == 12 | maxMonth == 2) {
+      seasonal_endmonth <- 2  # Winter
+    } else if (maxMonth <= 5) {
+      seasonal_endmonth <- 5  # Spring
+    } else if (maxMonth <= 8) {
+      seasonal_endmonth <- 8  # Summer
+    } else {
+      seasonal_endmonth <- 11  # Autumn
+    }
+
+    seasonal_startyear <- ifelse(minMonth == 12, minYear - 2, minYear - 1)
+    seasonal_endyear <- ifelse(minMonth == 12, maxYear + 1, maxYear)
+
+    #annual calculations
+    annual_startmonth <- annualstartmonth
+    annual_endmonth <- ifelse(annual_startmonth == 12, 1, annual_startmonth - 1)
+
+    annual_startyear <- ifelse(minMonth < annual_startmonth, minYear - 1, minYear)
+    annual_endyear <- ifelse(maxMonth > annual_endmonth, maxYear + 1, maxYear)
+
+    #use the *earliest* start year/month and *latest* end year/month from both
+    startyear <- min(seasonal_startyear, annual_startyear)
+    startmonth <- min(seasonal_startmonth, annual_startmonth)
+    endyear <- max(seasonal_endyear, annual_endyear)
+    endmonth <- max(seasonal_endmonth, annual_endmonth)
   }
 
   #Ensure startyear and endyear cover all necessary time periods
-  final_startyear <- min(startyear, minYear)
-  final_endyear <- max(endyear, maxYear)
+  final_startyear <- startyear
+  final_endyear <- endyear
 
   #Ensure startmonth and endmonth cover all necessary months
-  final_startmonth <- min(startmonth, minMonth)
-  final_endmonth <- max(endmonth, maxMonth)
+  final_startmonth <- startmonth
+  final_endmonth <- endmonth
 
   #Format into YYYY_MM strings
   start <- paste0(final_startyear, "_", sprintf("%02d", as.numeric(final_startmonth)))
@@ -188,7 +250,6 @@ extract_climate_values <- function(type,
     paste(x, collapse = "_"))
   datecombo <- datecombo[datecombo >= start & datecombo <= end]
   lnames <- sort(as.vector(outer(climvar, datecombo, paste, sep = "_")))
-
   #Coordinates
   if (type == 'coords') {
     isIrish <- crs == 'EPSG:29903'
@@ -525,7 +586,7 @@ extract_climate_values <- function(type,
     #perform extraction
     message("Extracting annual values. This may take a while.")
     for (i in seq_len(nrow(resultDf))) {
-      rowYear <- resultDf$year[i]
+      rowYear <- as.numeric(resultDf$year[i])
       rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
       rowRef <- resultDf$gridRef[i]
       #skip if NA values
@@ -583,10 +644,12 @@ extract_climate_values <- function(type,
       if (season == "winter") {
         if (as.numeric(rowMonth) == 12) {
           seasonY1 <- rowYear
+          seasonY2 <- seasonY1 + 1
         } else {
           seasonY1 <- rowYear - 1
+          seasonY2 <- rowYear
         }
-        seasonY2 <- seasonY1 + 1
+
       } else {
         season_start_month <- min(seasonsDef[[season]])
         if (season_start_month > as.numeric(rowMonth)) {
@@ -650,6 +713,11 @@ extract_climate_values <- function(type,
             seasonLayers <- which(years == y & months %in% seasonMonths)
             seasonYear <- paste0(y, "_", y)
           }
+          if (season == "winter" && y == 2022) {
+            matched <- paste0(years[seasonLayers], "_", sprintf("%02d", months[seasonLayers]))
+            message("Trying to create: ", paste0(envVar, "_winter_2022_2023"))
+            message("Matched layers: ", paste(matched, collapse = ", "))
+          }
 
           if(length(seasonLayers) < 3) {
             next
@@ -667,8 +735,6 @@ extract_climate_values <- function(type,
       inRangeRast <- do.call(c, seasonalRasts)
       seasonalRastList[[rastName]] <- inRangeRast
     }
-
-    print(names(seasonalRastList))
 
     for(i in seq_len(nrow(resultDf))) {
       rowYear <- resultDf$year[i]
