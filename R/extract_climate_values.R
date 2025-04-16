@@ -713,11 +713,6 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
             seasonLayers <- which(years == y & months %in% seasonMonths)
             seasonYear <- paste0(y, "_", y)
           }
-          if (season == "winter" && y == 2022) {
-            matched <- paste0(years[seasonLayers], "_", sprintf("%02d", months[seasonLayers]))
-            message("Trying to create: ", paste0(envVar, "_winter_2022_2023"))
-            message("Matched layers: ", paste(matched, collapse = ", "))
-          }
 
           if(length(seasonLayers) < 3) {
             next
