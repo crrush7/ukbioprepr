@@ -326,4 +326,3 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
 
   return(resultDf)
 }
-test1soil <- extract_soil_values('grid', refs, prop = c('phh2o', 'cec'))
