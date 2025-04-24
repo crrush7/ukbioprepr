@@ -502,7 +502,7 @@ extract_all_values <- function(type,
         niRast <- rastList[[paste0("ni_", p)]]
         nilocs <- which(resultDf$gridType == 'Irish Grid')
         if (length(nilocs) > 0) {
-          extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")])[, -1]
+          extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")], ID = FALSE)
           #some rasters have one layer
           if (is.vector(extractedNI)) {
             extractedNI <- data.frame(extractedNI)
@@ -517,7 +517,7 @@ extract_all_values <- function(type,
         ukRast <- rastList[[paste0("uk_", p)]]
         uklocs <- which(resultDf$gridType == 'British National Grid')
         if (length(uklocs) > 0) {
-          extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")])[, -1]
+          extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")], ID = FALSE)
           #some rasters have one layer
           if (is.vector(extractedUK)) {
             extractedUK <- data.frame(extractedUK)
@@ -592,7 +592,7 @@ extract_all_values <- function(type,
           !is.na(resultDf$gridType[i]) &&
           paste0("ni_", y) %in% names(rastList)) {
         niRast <- rastList[[paste0("ni_", y)]]
-        extractedNI <- terra::extract(niRast, resultDf[i, c("X_transformed", "Y_transformed")])[, -1]  #Remove cell ID
+        extractedNI <- terra::extract(niRast, resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE) #Remove cell ID
 
         if (!is.null(extractedNI) && ncol(extractedNI) > 0) {
           cover <- names(niRast)
@@ -606,7 +606,7 @@ extract_all_values <- function(type,
           !is.na(resultDf$gridType[i]) &&
           paste0("uk_", y) %in% names(rastList)) {
         ukRast <- rastList[[paste0("uk_", y)]]
-        extractedUK <- terra::extract(ukRast, resultDf[i, c("X_transformed", "Y_transformed")])[, -1]  #Remove cell ID
+        extractedUK <- terra::extract(ukRast, resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE) #Remove cell ID
 
         if (!is.null(extractedUK) && ncol(extractedUK) > 0) {
           cover <- names(ukRast)
@@ -889,7 +889,7 @@ extract_all_values <- function(type,
         }
       }
     } #handle annual
-    if ('annual' %in% time) {
+    if ('annual' %in% climtime) {
       annualRastList <- list()
       #get env names from list
       for (rastName in names(aRastList)) {
