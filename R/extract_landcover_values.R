@@ -271,7 +271,7 @@ extract_landcover_values <- function(type, df, crs = NULL) {
         !is.na(resultDf$gridType[i]) &&
         paste0("ni_", y) %in% names(rastList)) {
       niRast <- rastList[[paste0("ni_", y)]]
-      extractedNI <- terra::extract(niRast, resultDf[i, c("X_transformed", "Y_transformed")])[, -1]  #Remove cell ID
+      extractedNI <- terra::extract(niRast, resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)  #Remove cell ID
 
       if (!is.null(extractedNI) && ncol(extractedNI) > 0) {
         cover <- names(niRast)
@@ -285,7 +285,7 @@ extract_landcover_values <- function(type, df, crs = NULL) {
         !is.na(resultDf$gridType[i]) &&
         paste0("uk_", y) %in% names(rastList)) {
       ukRast <- rastList[[paste0("uk_", y)]]
-      extractedUK <- terra::extract(ukRast, resultDf[i, c("X_transformed", "Y_transformed")])[, -1]  #Remove cell ID
+      extractedUK <- terra::extract(ukRast, resultDf[i, c("X_transformed", "Y_transformed")], ID = FALSE)  #Remove cell ID
 
       if (!is.null(extractedUK) && ncol(extractedUK) > 0) {
         cover <- names(ukRast)

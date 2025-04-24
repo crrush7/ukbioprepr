@@ -296,7 +296,7 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
       niRast <- rastList[[paste0("ni_", p)]]
       nilocs <- which(resultDf$gridType == 'Irish Grid')
       if (length(nilocs) > 0) {
-        extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")])[, -1]
+        extractedNI <- terra::extract(niRast, resultDf[nilocs, c("X_transformed", "Y_transformed")], ID = FALSE)
         #some rasters have one layer
         if (is.vector(extractedNI)) {
           extractedNI <- data.frame(extractedNI)
@@ -311,7 +311,7 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
       ukRast <- rastList[[paste0("uk_", p)]]
       uklocs <- which(resultDf$gridType == 'British National Grid')
       if (length(uklocs) > 0) {
-        extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")])[, -1]
+        extractedUK <- terra::extract(ukRast, resultDf[uklocs, c("X_transformed", "Y_transformed")], ID = FALSE)
         #some rasters have one layer
         if (is.vector(extractedUK)) {
           extractedUK <- data.frame(extractedUK)
