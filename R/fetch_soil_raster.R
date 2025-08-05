@@ -88,39 +88,57 @@ fetch_soil_raster <- function(reg, prop = NULL) {
     prop <- setdiff(prop, invalprop)
   }
 
-  #temp directory that lasts for session
   tempDir <- tempdir()
-
-  #initalise raster list
   rastList <- list()
 
-  #loop through the properties, create file name
   for (p in prop) {
     fileName <- paste0(reg, p, ".tif")
     fileUrl <- paste0(baseUrl, fileName)
     temp <- file.path(tempDir, fileName)
 
-    #Check if file exists first
+    # Download if file doesn't exist
     if (!file.exists(temp)) {
-    #download the files
-    tryCatch({
-      download.file(fileUrl, temp, mode = "wb")
-      message("Downloaded: ", fileName)
-    }, error = function(e) {
-      warning("Failed to download: ", fileName, ". Error: ", e$message)
-    })
+      tryCatch({
+        download.file(fileUrl, temp, mode = "wb")
+        message("Downloaded: ", fileName)
+      }, error = function(e) {
+        warning("Failed to download: ", fileName, ". Error: ", e$message)
+      })
     } else {
-    message("File already downloaded during this session ", fileName, " - using cached version.")
+      message("File already downloaded during this session: ", fileName)
     }
-    if(file.exists(temp)){
-      rastList[[p]] <- rast(temp)
-    } else {
-      warning("File missing after attempted download: ", fileName)
+
+    # Try to open the raster
+    r <- suppressWarnings(try(rast(temp), silent = TRUE))
+
+    # If reading failed or raster is invalid, re-download
+    if (inherits(r, "try-error") || nlyr(r) == 0) {
+      message("Cached file is corrupt or unreadable. Redownloading: ", fileName)
+      file.remove(temp)
+      tryCatch({
+        download.file(fileUrl, temp, mode = "wb")
+        message("Downloaded again: ", fileName)
+      }, error = function(e) {
+        warning("Redownload failed: ", fileName, ". Error: ", e$message)
+      })
+
+      r <- suppressWarnings(try(rast(temp), silent = TRUE))
+
+      if (inherits(r, "try-error") || nlyr(r) == 0) {
+        warning("Redownloaded file still invalid: ", fileName)
+        next
+      }
     }
-}
-  #return raster if only one in list
+
+    rastList[[p]] <- r
+  }
+
   if (length(rastList) == 1) {
     return(rastList[[1]])
+  } else if (length(rastList) == 0) {
+    stop("No valid rasters could be loaded.")
+  } else {
+    return(rastList)
   }
   return(rastList)
 }
