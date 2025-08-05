@@ -20,10 +20,10 @@ If crs is not ‘EPSG:29903’ for Irish Grid, or ‘EPSG:27700’ for British N
 Properties can be the following:\cr
 "ocd", organic carbon density kg m-3 \cr
 "bdod", bulk dens of fine earth fraction kg dm-3 \cr
-"clay", clay (<0.002) in fine earth %, \cr
-"cfvo", vol fraction of coarse fragments (>2mm) % \cr
-"sand", sand (> 0.05mm) in fine earth % \cr
-"silt", silt (0.002-0.05mm) in fine earth % \cr
+"clay", clay (<0.002) in fine earth (percentage) \cr
+"cfvo", vol fraction of coarse fragments (>2mm) (percentage) \cr
+"sand", sand (> 0.05mm) in fine earth (percentage) \cr
+"silt", silt (0.002-0.05mm) in fine earth (percentage) \cr
 "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10 \cr
 "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10 \cr
 "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10 \cr
