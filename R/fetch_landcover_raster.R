@@ -42,75 +42,84 @@
 #' @return a list of rasters of specified region for specified time frame. Each raster is for one year and is at 1km resolution, with layers corresponding to land cover classes.
 #' @export
 fetch_landcover_raster <- function(reg, startyear, endyear) {
-
-  #define base url for zenodo repository
   baseUrl <- "https://zenodo.org/records/14849882/files/"
 
-  #Validate region input
+  # Validate region input
   if (!reg %in% c('ni', 'uk')) {
-    stop(
-      'Invalid region input. Choose either "ni" for Northern Ireland or "uk" for United Kingdom'
-    )
+    stop('Invalid region input. Choose either "ni" for Northern Ireland or "uk" for United Kingdom')
   }
 
-  #Validate year input
+  # Validate year input
+  if (!is.numeric(startyear) || !is.numeric(endyear)) {
+    stop('Start and end years must be numeric.')
+  }
   if (!startyear %in% 2000:2023 || !endyear %in% 2000:2023) {
-    stop('Invalid year input. Years must be between 2000 - 2023.')
+    stop('Years must be between 2000 and 2023.')
   }
   if (startyear > endyear) {
-    stop('Invalid year input. Start year must be before end year.')
-  }
-  if (!is.numeric(startyear) || !is.numeric(endyear)) {
-    stop('Invalid year input. Start year and end year must be numeric.')
+    stop('Start year must be before or equal to end year.')
   }
 
-  #warn user about aggregated classes
   useagg <- startyear < 2015
   if (useagg) {
-    message(
-      'As your start year is before 2015, the output rasters will have aggregated land cover classes.
-            Full land cover classes are available for years 2015 - 2023.'
-    )
+    message("Years before 2015 use aggregated land cover classes.")
   }
-  #temp directory that lasts for session
-  tempDir <- tempdir()
 
-  #initalise raster list
+  tempDir <- tempdir()
   rastList <- list()
-  #create year list
   yearlist <- startyear:endyear
 
-  #loop through the years, create file name depending on years
   for (y in yearlist) {
-    fileName <- if (useagg) {
-      paste0(y, reg, "agg.tif")
-    } else {
-      paste0(y, reg, ".tif")
-    }
+    fileName <- if (useagg) paste0(y, reg, "agg.tif") else paste0(y, reg, ".tif")
     fileUrl <- paste0(baseUrl, fileName)
     temp <- file.path(tempDir, fileName)
-    #Check if exists
-    if (!file.exists(temp)){
-    #download the files
-    tryCatch({
-      download.file(fileUrl, temp, mode = "wb")
-      message("Downloaded: ", fileName)
-    }, error = function(e) {
-      warning("Failed to download: ", fileName, ". Error: ", e$message)
-    })
+
+    # Download if missing
+    if (!file.exists(temp)) {
+      tryCatch({
+        download.file(fileUrl, temp, mode = "wb")
+        message("Downloaded: ", fileName)
+      }, error = function(e) {
+        warning("Failed to download: ", fileName, " — ", e$message)
+        message("Skipping year ", y)
+        next
+      })
     } else {
-    message("File already downloaded during this session ", fileName, " - using cached version.")
+      message("Using cached version: ", fileName)
     }
-    if(file.exists(temp)){
-      #store raster in list
-      rastList[[as.character(y)]] <- rast(temp)
-    } else {
-      warning("File missing after attempted download: ", fileName)
+
+    # Try to read raster
+    r <- suppressWarnings(try(rast(temp), silent = TRUE))
+
+    if (inherits(r, "try-error") || nlyr(r) == 0) {
+      message("Corrupt or unreadable raster. Redownloading: ", fileName)
+      file.remove(temp)
+
+      tryCatch({
+        download.file(fileUrl, temp, mode = "wb")
+        message("Redownloaded: ", fileName)
+      }, error = function(e) {
+        warning("Redownload failed: ", fileName, " — ", e$message)
+        message("Skipping year ", y)
+        next
+      })
+
+      r <- suppressWarnings(try(rast(temp), silent = TRUE))
+      if (inherits(r, "try-error") || nlyr(r) == 0) {
+        warning("Redownloaded file still invalid: ", fileName)
+        message("Skipping year ", y)
+        next
+      }
     }
+
+    rastList[[as.character(y)]] <- r
   }
-  #return raster if only one in list
-  if (length(rastList) == 1) {
+
+  if (length(rastList) == 0) {
+    stop("No valid rasters could be loaded.")
+  } else if (length(rastList) == 1) {
     return(rastList[[1]])
+  } else {
+    return(rastList)
   }
-  return(rastList)
 }
