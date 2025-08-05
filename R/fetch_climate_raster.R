@@ -36,7 +36,7 @@
 # Returns:
 #' @return  A subset raster of the selected climate variable, time parameter and date range at 1km resolution.
 #' @export
-fetch_climate_raster <- function(reg, cv, start, end, time, agg=NULL) {
+fetch_climate_raster <- function(reg, cv, start, end, time=NULL, agg=NULL) {
 
   #Validate region
   if (!reg %in% c("uk", "ni")) {
@@ -49,9 +49,13 @@ fetch_climate_raster <- function(reg, cv, start, end, time, agg=NULL) {
     )
   }
   #Validate time choice
+  if(is.null(time)){
+    stop("Invalid time choice. Please choose 'monthly', 'seasonal' or 'annual'.")
+  }
   if (!time %in% c("monthly", "seasonal", "annual")) {
     stop("Invalid time choice. Please choose 'monthly', 'seasonal' or 'annual'.")
   }
+
   #Handle agg depending on time
   if (time == "monthly") {
     if (!is.null(agg)) {
@@ -87,38 +91,73 @@ fetch_climate_raster <- function(reg, cv, start, end, time, agg=NULL) {
       !grepl("^\\d{4}_\\d{2}$", end)) {
     stop("Please provide valid 'start' and 'end' dates in 'YYYY_MM' format.")
   }
-  dlClimate <- function(reg, cv) {
-    #zenodo url once publihed
-    baseUrl <- "https://zenodo.org/records/14841658/files/"
 
-    #create file name
-    name <- paste0(cv, "monthly", reg, ".nc")
-    link <- paste0(baseUrl, name)
+  #Convert to Date objects for comparison
+  start_date <- as.Date(paste0(start, "_01"), format = "%Y_%m_%d")
+  end_date   <- as.Date(paste0(end, "_01"), format = "%Y_%m_%d")
 
-    #temp file location
-    tempDir <- tempdir()
-    temp <- file.path(tempDir, name)
-    #warn user about changing timeout time if choosing uk
-    if(reg == 'uk'){
-      message(paste('The UK climate datasets are very large files.'))
-      message(paste('You may need to increase the timeout to ensure full download by running options(timeout = x).'))
-    }
-    #Check if file exists
-    if(!file.exists(temp)){
-    #download
-    tryCatch({
-      download.file(link, temp, mode = "wb")
-      message("Downloaded: ", link)
-    }, error = function(e) {
-      stop("Download failed: ", e$message)
-    })
-    } else {
-      message("File already downloaded during this session ", name, " - using cached version.")
-    }
-    #Load as spatraster
-    cvraster <- rast(temp)
-    return(cvraster)
+  #Check that start is before or equal to end
+  if (start_date > end_date) {
+    stop("'start' date must be earlier than or equal to 'end' date.")
   }
+  #Check range
+  min_date <- as.Date("2000_01_01", format = "%Y_%m_%d")
+  max_date <- as.Date("2023_12_01", format = "%Y_%m_%d")
+  if (start_date < min_date || end_date > max_date) {
+    stop("Dates must be between '2000_01' and '2023_12'.")
+  }
+
+ dlClimate <- function(reg, cv) {
+   baseUrl <- "https://zenodo.org/records/14841658/files/"
+   name <- paste0(cv, "monthly", reg, ".nc")
+   link <- paste0(baseUrl, name)
+   tempDir <- tempdir()
+   temp <- file.path(tempDir, name)
+
+   if (reg == 'uk') {
+     message("The UK climate datasets are large files.")
+     message("You may need to increase the timeout with options(timeout = x).")
+   }
+
+   # Download file if it doesn't exist
+   if (!file.exists(temp)) {
+     tryCatch({
+       download.file(link, temp, mode = "wb")
+       message("Downloaded: ", link)
+     }, error = function(e) {
+       stop("Download failed: ", e$message)
+     })
+   } else {
+     message("File already downloaded during this session ", name, " - using cached version.")
+   }
+
+   #Try to open the raster
+   cvraster <- suppressWarnings(try(rast(temp), silent = TRUE))
+
+   #If reading failed or has zero layers, assume it's corrupt
+   if (inherits(cvraster, "try-error") || nlyr(cvraster) == 0) {
+     message("Cached file is corrupt or unreadable. Redownloading...")
+
+     file.remove(temp)
+
+     tryCatch({
+       download.file(link, temp, mode = "wb")
+       message("Downloaded: ", link)
+     }, error = function(e) {
+       stop("Download failed again: ", e$message)
+     })
+
+     # Try again after redownloading
+     cvraster <- suppressWarnings(try(rast(temp), silent = TRUE))
+
+     if (inherits(cvraster, "try-error") || nlyr(cvraster) == 0) {
+       stop("Redownloaded file is still invalid. Please check your internet connection or increase timeout.")
+     }
+   }
+
+   return(cvraster)
+ }
+
   #Download raster
   x <- dlClimate(reg, cv)
   #Extract layer names and transform
@@ -180,44 +219,59 @@ fetch_climate_raster <- function(reg, cv, start, end, time, agg=NULL) {
   }
   #annual
   if (time == 'annual') {
+    #layer names
     year_month <- do.call(rbind, strsplit(layerNames[inRangeLayers], "_"))
     years <- as.integer(year_month[, 1])
     months <- as.integer(year_month[, 2])
-    #extracting year and month from start and end date input YYYY_MM
+    layerDates <- as.Date(sprintf("%d-%02d-01", years, months))
+
+    #lookup
+    layerLookup <- data.frame(
+      name = layerNames[inRangeLayers],
+      date = layerDates,
+      index = inRangeLayers
+    )
+
+    #Extract start/end
     starty <- as.integer(substr(start, 1, 4))
     endy <- as.integer(substr(end, 1, 4))
     startm <- as.integer(substr(start, 6, 7))
-    endm <- as.integer(substr(end, 6, 7))
-    #define custom year (12 months)
+
+    #Loop over years
     customYears <- seq(starty, endy)
     annualRasts <- list()
 
     for (y in customYears) {
-      yearStart <- paste0(y, "_", sprintf("%02d", startm))
       if (startm == 1) {
-        yearEnd <- paste0(y, "_12")
+        yearStartDate <- as.Date(sprintf("%d-%02d-01", y, startm))
+        yearEndDate   <- as.Date(sprintf("%d-12-01", y))
         annName <- paste0("clim_annual_", y)
       } else {
-        yearEnd <- paste0(y + 1, "_", sprintf("%02d", startm - 1))
+        yearStartDate <- as.Date(sprintf("%d-%02d-01", y, startm))
+        yearEndDate   <- as.Date(sprintf("%d-%02d-01", y + 1, startm - 1))
         annName <- paste0("clim_annual_", y, "_", startm, "-", y + 1, "_", startm -1)
       }
-      annualLayers <- which(layerNames >= yearStart &
-                              layerNames <= yearEnd)
-      #warnings for incomplete years
-      if (length(annualLayers) < 12) {
+
+      #Find matching layers
+      inYear <- layerLookup$date >= yearStartDate & layerLookup$date <= yearEndDate
+
+      if (sum(inYear) < 12) {
         warning(paste('Incomplete annual data from month', startm, ', year', y,  '- skipping'))
         next
       }
+
+      annualLayers <- layerLookup$index[inYear]
       annualRast <- app(x[[annualLayers]], aggFunct, na.rm = TRUE)
       names(annualRast) <- annName
       annualRasts <- c(annualRasts, annualRast)
     }
+
     if (length(annualRasts) == 0) {
-      stop('No complete annual data availble for selected date range.')
+      stop('No complete annual data available for selected date range.')
     }
+
     inRangeRast <- do.call(c, annualRasts)
   }
+
   return(inRangeRast)
 }
-test1 <- fetch_climate_raster('ni', 'rain', '2000_01', '2000_12', time = 'monthly', agg = 'mean')
-test2 <- fetch_climate_raster('ni', 'rain', '2001_01', '2001_12', time = 'monthly')
