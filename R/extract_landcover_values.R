@@ -44,7 +44,6 @@
 #' ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
 #' ‘grassagg’ for grasses and \cr
 #' ‘upland’ for upland classes \cr
-#' For more information on these, please read the accompanying documentation.
 #' @export
 extract_landcover_values <- function(type, df, crs = NULL) {
   #Checking input is data frame
@@ -107,7 +106,7 @@ extract_landcover_values <- function(type, df, crs = NULL) {
       message(
         "Reprojecting your coordinates to British National Grid (EPSG:27700) for extraction."
       )
-      coordsVect <- terra::vect(df[, c("X", "Y")], crs = crs)
+      coordsVect <- terra::vect(df, geom = c("X", "Y"), crs = crs)
       transformedCoords <- terra::project(coordsVect, "EPSG:27700")
 
       df$X_transformed <- terra::geom(transformedCoords)[, "x"]
@@ -208,59 +207,79 @@ extract_landcover_values <- function(type, df, crs = NULL) {
     }
   }
 
-  #Download data from Zenodo
+  # Download data from Zenodo
   baseUrl <- "https://zenodo.org/records/14849882/files/"
 
-  #Determine what region is needed
+  # Determine what region is needed
   dlNI <- "Irish Grid" %in% resultDf$gridType
   dlUK <- "British National Grid" %in% resultDf$gridType
 
-  #Determine what rasters to use (modern or aggregated)
+  # Determine whether to use aggregated land cover
   dlAgg <- any(yearstot < 2015)
   if (dlAgg) {
     message(
-      "Because your data frame contains years earlier than 2015, your land cover extractions
-            will be based on aggregated land cover classes. For more information, see guidance notes."
+      "Because your data frame contains years earlier than 2015, your land cover extractions ",
+      "will be based on aggregated land cover classes."
     )
   }
-  #temp directory
+
+  #Temp directory
   tempDir <- tempdir()
 
-  #dl rasters
+  #raster download function
   dlRaster <- function(region, year, isAgg) {
     suffix <- ifelse(isAgg, "agg", "")
     fileName <- paste0(year, region, suffix, ".tif")
     fileUrl <- paste0(baseUrl, fileName)
     tempPath <- file.path(tempDir, fileName)
-    #Check if exists
-    if (!file.exists(tempPath)){
-    tryCatch({
-      download.file(fileUrl, tempPath, mode = "wb")
-      message("Downloaded: ", fileName)
-    }, error = function(e) {
-      warning("Failed to download: ", fileName, ". Error: ", e$message)
-    })
+
+    #Check if file exists
+    if (!file.exists(tempPath)) {
+      tryCatch({
+        download.file(fileUrl, tempPath, mode = "wb")
+        message("Downloaded: ", fileName)
+      }, error = function(e) {
+        warning("Failed to download: ", fileName, ". Error: ", e$message)
+      })
     } else {
-      message("File already downloaded during this session ", fileName, " - using cached version.")
+      message("File already downloaded during this session: ", fileName, " — using cached version.")
     }
-    if(file.exists(tempPath)){
-      r <- terra::rast(tempPath)
+
+    #Try loading the raster
+    r <- suppressWarnings(try(terra::rast(tempPath), silent = TRUE))
+
+    if (inherits(r, "try-error") || terra::nlyr(r) == 0) {
+      message("Cached file is corrupt or unreadable. Redownloading: ", fileName)
+      file.remove(tempPath)
+      tryCatch({
+        download.file(fileUrl, tempPath, mode = "wb")
+        message("Downloaded again: ", fileName)
+      }, error = function(e) {
+        warning("Redownload failed: ", fileName, ". Error: ", e$message)
+      })
+      r <- suppressWarnings(try(terra::rast(tempPath), silent = TRUE))
+    }
+
+    if (!inherits(r, "try-error") && terra::nlyr(r) > 0) {
+      return(r)
     } else {
-      warning("File missing after attempted download: ", fileName)
+      warning("Could not load raster for: ", fileName)
+      return(NULL)
     }
-    return(r)
   }
 
-  #initialise list
+  #Initialise list
   rastList <- list()
   for (y in yearstot) {
-    if (any(dlNI))
-      rastList[[paste0("ni", "_", y)]] <- dlRaster("ni", y, dlAgg)
-    if (any(dlUK))
-      rastList[[paste0("uk", "_", y)]] <- dlRaster("uk", y, dlAgg)
+    if (dlNI) {
+      rastList[[paste0("ni_", y)]] <- dlRaster("ni", y, dlAgg)
+    }
+    if (dlUK) {
+      rastList[[paste0("uk_", y)]] <- dlRaster("uk", y, dlAgg)
+    }
   }
   #Extract land cover data per coordinate based on year
-  message("Performing land cover extractions. Please be patient.")
+  message("Performing land cover extractions.")
   for (i in seq_len(nrow(resultDf))) {
     y <- resultDf$year[i]  #Year associated with the coordinate
     rowRef <- resultDf$gridRef[i]
