@@ -385,72 +385,100 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
     )
   }
 
-  #temp directory
+  # Temp directory
   tempDir <- tempdir()
 
-  #initialise list
+  # Initialise list
   rastList <- list()
 
-
-  #dl rasters
+  # Download and load rasters
   for (y in inputYears) {
+
     if (dlNI) {
       fileNameNI <- paste0("ni_climate_", y, ".nc")
       fileUrlNI <- paste0(baseUrl, fileNameNI)
       tempNI <- file.path(tempDir, fileNameNI)
+
       if (!file.exists(tempNI)) {
         tryCatch({
           download.file(fileUrlNI, tempNI, mode = "wb")
-          message("Downloaded: ", fileUrlNI)
+          message("Downloaded: ", fileNameNI)
         }, error = function(e) {
-          warning("Failed to download: ",
-                  fileNameNI,
-                  ". Error: ",
-                  e$message)
+          warning("Failed to download: ", fileNameNI, " — ", e$message)
+          next
         })
       } else {
-        message(
-          "File already downloaded during ths session ",
-          fileNameNI,
-          " - using cached version."
-        )
+        message("Using cached version: ", fileNameNI)
       }
-      if (file.exists(tempNI)) {
-        tempNI <- rast(tempNI)
-        matching <- names(tempNI)[names(tempNI) %in% lnames]
-        tempNI <- tempNI[[matching]]
-        rastList[[paste0("ni_", y)]] <- tempNI
+
+      r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+
+      if (inherits(r, "try-error") || nlyr(r) == 0) {
+        message("Corrupt file detected: ", fileNameNI, ". Redownloading.")
+        file.remove(tempNI)
+
+        tryCatch({
+          download.file(fileUrlNI, tempNI, mode = "wb")
+          message("Redownloaded: ", fileNameNI)
+        }, error = function(e) {
+          warning("Redownload failed: ", fileNameNI, " — ", e$message)
+          next
+        })
+
+        r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+        if (inherits(r, "try-error") || nlyr(r) == 0) {
+          warning("Still invalid after redownload: ", fileNameNI)
+          next
+        }
       }
+
+      matching <- names(r)[names(r) %in% lnames]
+      rastList[[paste0("ni_", y)]] <- r[[matching]]
     }
+
     if (dlUK) {
       fileNameUK <- paste0("uk_climate_", y, ".nc")
       fileUrlUK <- paste0(baseUrl, fileNameUK)
       tempUK <- file.path(tempDir, fileNameUK)
+
       if (!file.exists(tempUK)) {
         tryCatch({
           download.file(fileUrlUK, tempUK, mode = "wb")
-          message("Downloaded: ", fileUrlUK)
+          message("Downloaded: ", fileNameUK)
         }, error = function(e) {
-          warning("Failed to download: ",
-                  fileNameUK,
-                  ". Error: ",
-                  e$message)
+          warning("Failed to download: ", fileNameUK, " — ", e$message)
+          next
         })
       } else {
-        message(
-          "File already downloaded during this session ",
-          fileNameUK,
-          " - using cached version."
-        )
+        message("Using cached version: ", fileNameUK)
       }
-      if (file.exists(tempUK)) {
-        tempUK <- rast(tempUK)
-        matching <- names(tempUK)[names(tempUK) %in% lnames]
-        tempUK <- tempUK[[matching]]
-        rastList[[paste0("uk_", y)]] <- tempUK
+
+      r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+
+      if (inherits(r, "try-error") || nlyr(r) == 0) {
+        message("Corrupt file detected: ", fileNameUK, ". Redownloading.")
+        file.remove(tempUK)
+
+        tryCatch({
+          download.file(fileUrlUK, tempUK, mode = "wb")
+          message("Redownloaded: ", fileNameUK)
+        }, error = function(e) {
+          warning("Redownload failed: ", fileNameUK, " — ", e$message)
+          next
+        })
+
+        r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+        if (inherits(r, "try-error") || nlyr(r) == 0) {
+          warning("Still invalid after redownload: ", fileNameUK)
+          next
+        }
       }
+
+      matching <- names(r)[names(r) %in% lnames]
+      rastList[[paste0("uk_", y)]] <- r[[matching]]
     }
   }
+
   annualseasonList <- list()
   monthlyList <- list()
   if ("annual" %in% time | "seasonal" %in% time) {
@@ -560,15 +588,6 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
                                 layerNames <= yearEnd)
         #warnings for incomplete years
         if (length(annualLayers) < 12) {
-          warning(
-            paste(
-              'Incomplete annual data from month',
-              startmonth,
-              ', year',
-              y,
-              '- skipping'
-            )
-          )
           next
         }
         annualRast <- app(x[[annualLayers]], aggFunct, na.rm = TRUE)
@@ -584,7 +603,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
 
     #extract annual data using the new list of rasters
     #perform extraction
-    message("Extracting annual values. This may take a while.")
+    message("Extracting annual values.")
     for (i in seq_len(nrow(resultDf))) {
       rowYear <- as.numeric(resultDf$year[i])
       rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
@@ -637,6 +656,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
 
   #handling if seasonal is selected
   if('seasonal' %in% time) {
+    message("Extracting seasonal values.")
     seasonalRastList <- list()
 
     #function to determine the correct season year range
@@ -702,7 +722,6 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
         return(prevSeasons)
       }
 
-      message("Extracting seasonal values.")
       for(y in unique(years)) {
         for(season in names(seasonsDef)) {
           seasonMonths <- seasonsDef[[season]]
