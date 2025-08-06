@@ -385,13 +385,13 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
     )
   }
 
-  # Temp directory
+  #temp directory
   tempDir <- tempdir()
 
-  # Initialise list
+  #Initialise list
   rastList <- list()
 
-  # Download and load rasters
+  #Download and load rasters
   for (y in inputYears) {
 
     if (dlNI) {

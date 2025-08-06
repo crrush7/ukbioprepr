@@ -207,10 +207,10 @@ extract_landcover_values <- function(type, df, crs = NULL) {
     }
   }
 
-  # Download data from Zenodo
+  #Download data from Zenodo
   baseUrl <- "https://zenodo.org/records/14849882/files/"
 
-  # Determine what region is needed
+  #Determine what region is needed
   dlNI <- "Irish Grid" %in% resultDf$gridType
   dlUK <- "British National Grid" %in% resultDf$gridType
 

@@ -238,22 +238,17 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
   rastList <- list()
 
   #dl rasters
-  # Temp directory
-  tempDir <- tempdir()
 
-  # Initialise list
-  rastList <- list()
-
-  # Loop over properties
+  #Loop over properties
   for (p in prop) {
 
-    # NI
+    #NI
     if (dlNI) {
       fileNameNI <- paste0("ni", p, ".tif")
       fileUrlNI <- paste0(baseUrl, fileNameNI)
       tempNI <- file.path(tempDir, fileNameNI)
 
-      # Download if file doesn't exist
+      #Download if file doesn't exist
       if (!file.exists(tempNI)) {
         tryCatch({
           download.file(fileUrlNI, tempNI, mode = "wb")
@@ -265,7 +260,7 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
         message("File already downloaded this session: ", fileNameNI, " — using cached version.")
       }
 
-      # Try loading raster
+      #Try loading raster
       r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
 
       if (inherits(r, "try-error") || nlyr(r) == 0) {
@@ -287,7 +282,7 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
       }
     }
 
-    # UK
+    #UK
     if (dlUK) {
       fileNameUK <- paste0("uk", p, ".tif")
       fileUrlUK <- paste0(baseUrl, fileNameUK)
