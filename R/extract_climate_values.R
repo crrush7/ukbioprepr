@@ -265,7 +265,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
       message(
         "Reprojecting your coordinates to British National Grid (EPSG:27700) for extraction."
       )
-      coordsVect <- terra::vect(df[, c("X", "Y")], crs = crs)
+      coordsVect <- terra::vect(df, geom = c("X", "Y"), crs = crs)
       transformedCoords <- terra::project(coordsVect, "EPSG:27700")
 
       df$X_transformed <- terra::geom(transformedCoords)[, "x"]
@@ -489,7 +489,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
   }
   if ('monthly' %in% time) {
     #extract climate data on selected vars based on year / month
-    message("Extracting monthly values. This might take a while. ")
+    message("Extracting monthly values.")
     for (i in seq_len(nrow(resultDf))) {
       rowYear <- resultDf$year[i]
       rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
