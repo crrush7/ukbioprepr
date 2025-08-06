@@ -29,7 +29,7 @@ Properties can be the following:\cr
 "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10 \cr
 "cec", cation exchange capacity cmol(+)kg-1 \cr
 "nitrogen", total nitrogen g kg-1 \cr
-"phh2o", pH (H20) \cr
+"phh2o", pH \cr
 "soc", #soil organic carbon in fine earth g kg-1 \cr
 "ocs" #organic carbon stocks kg m-2 \cr
 All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.}

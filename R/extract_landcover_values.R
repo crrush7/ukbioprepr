@@ -34,7 +34,7 @@
 #' ‘sw’: saltwater \cr
 #' ‘fw’: freshwater \cr
 #' ‘slr’: supralittoral rock \cr
-#' ‘sls’” supralittoral sediment \cr
+#' ‘sls’: supralittoral sediment \cr
 #' ‘lr’: littoral rock \cr
 #' ‘ls’: littoral sediment \cr
 #' ‘sm’: saltmarsh \cr

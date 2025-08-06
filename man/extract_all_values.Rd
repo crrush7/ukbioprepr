@@ -44,7 +44,7 @@ Properties can be the following:\cr
 "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10 \cr
 "cec", cation exchange capacity cmol(+)kg-1 \cr
 "nitrogen", total nitrogen g kg-1 \cr
-"phh2o", pH (H20) \cr
+"phh2o", pH \cr
 "soc", #soil organic carbon in fine earth g kg-1 \cr
 "ocs" #organic carbon stocks kg m-2 \cr
 All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.}
@@ -82,7 +82,7 @@ If you are interested in alternative aggregations, for example the mean rainfall
 A data frame containing grid reference if type = 'grid', or the input coordinates if type = ‘coords.’ The original 'month' and 'year' columns are included if originally input. \cr
 Two columns, ‘X_transformed’ and ‘Y_transformed’ detail either the coordinates used for extraction if type = ‘grid’ (the bottom left coordinate of the grid reference), or the projected coordinates if type = ‘coords.’ If type = ‘coords’, and crs = either ‘EPSG:29903’ or ‘EPSG:27700’, these columns will be identical to the input ‘X’ and ‘Y’ coordinates. \cr
 If soil = true, columns include extracted values and will be named indicating the soil property and the depth, e.g. ocd_D0to5cm, bdod_D100to200cm. \cr
-If landcover = true, columns will indicate the percentage cover of each land cover class in that 1km grid square.
+If landcover = true, columns will indicate the % cover of each land cover class in that 1km grid square.
 #' If 'year' is from 2015 onwards, land cover classes are: \cr
 ‘blw’: broad leaved woodland \cr
 ‘cw’: coniferous woodland \cr
@@ -99,7 +99,7 @@ If landcover = true, columns will indicate the percentage cover of each land cov
 ‘sw’: saltwater \cr
 ‘fw’: freshwater \cr
 ‘slr’: supralittoral rock \cr
-‘sls’” supralittoral sediment \cr
+‘sls’: supralittoral sediment \cr
 ‘lr’: littoral rock \cr
 ‘ls’: littoral sediment \cr
 ‘sm’: saltmarsh \cr
@@ -109,7 +109,6 @@ If ‘year’ spans before 2015, the class column names would instead be: \cr
 ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
 ‘grassagg’ for grasses and \cr
 ‘upland’ for upland classes \cr
-For more information on these, please read the accompanying documentation. \cr
 If climate = TRUE, columns will be available for the variable and time period e.g. monthly_tas, winter_rain, annual_tasmin.
 }
 \description{

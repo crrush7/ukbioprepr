@@ -4,7 +4,7 @@
 \alias{fetch_climate_raster}
 \title{Download and create climate raster files}
 \usage{
-fetch_climate_raster(reg, cv, start, end, time = "monthly", agg)
+fetch_climate_raster(reg, cv, start, end, time = NULL, agg = NULL)
 }
 \arguments{
 \item{reg}{Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid}

@@ -12,16 +12,16 @@
 #' Properties can be the following:\cr
 #' "ocd", organic carbon density kg m-3 \cr
 #' "bdod", bulk dens of fine earth fraction kg dm-3 \cr
-#' "clay", clay (<0.002) in fine earth %, \cr
-#' "cfvo", vol fraction of coarse fragments (>2mm) % \cr
-#' "sand", sand (> 0.05mm) in fine earth % \cr
-#' "silt", silt (0.002-0.05mm) in fine earth % \cr
+#' "clay", clay (<0.002) in fine earth (percentage) \cr
+#' "cfvo", vol fraction of coarse fragments (>2mm) (percentage) \cr
+#' "sand", sand (> 0.05mm) in fine earth (percentage) \cr
+#' "silt", silt (0.002-0.05mm) in fine earth (percentage) \cr
 #' "wv0010", vol of water content at -10kPa (10-2cm3 cm-3)*10 \cr
 #' "wv0033", vol of water content at -33kPa (10-2cm3 cm-3)*10 \cr
 #' "wv1500", vol of water content at -1500kPa (10-2cm3 cm-3)*10 \cr
 #' "cec", cation exchange capacity cmol(+)kg-1 \cr
 #' "nitrogen", total nitrogen g kg-1 \cr
-#' "phh2o", pH (H20) \cr
+#' "phh2o", pH  \cr
 #' "soc", #soil organic carbon in fine earth g kg-1 \cr
 #' "ocs" #organic carbon stocks kg m-2 \cr
 #' All soil properties are extracted at their available depths: 0-5cm, 5-15cm, 15-30cm, 30-60cm, 60-100cm, 100-200cm for all except ocs, organic carbon stocks which is only available at 0-30cm depth.

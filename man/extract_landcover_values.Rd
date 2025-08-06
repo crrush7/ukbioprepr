@@ -46,7 +46,6 @@ If ‘year’ spans before 2015, the class column names would instead be: \cr
 ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
 ‘grassagg’ for grasses and \cr
 ‘upland’ for upland classes \cr
-For more information on these, please read the accompanying documentation.
 }
 \description{
 This function extracts values of land cover from 1km resolution raster files over a number of years. Raster files are stored in an online repository, therefore this function relies on an internet connection. \cr
