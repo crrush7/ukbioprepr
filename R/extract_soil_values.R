@@ -131,7 +131,7 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
       message(
         "Reprojecting your coordinates to British National Grid (EPSG:27700) for extraction."
       )
-      coordsVect <- terra::vect(df[, c("X", "Y")], crs = crs)
+      coordsVect <- terra::vect(df, geom = c("X", "Y"), crs = crs)
       transformedCoords <- terra::project(coordsVect, "EPSG:27700")
 
       df$X_transformed <- terra::geom(transformedCoords)[, "x"]
@@ -238,14 +238,22 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
   rastList <- list()
 
   #dl rasters
+  # Temp directory
+  tempDir <- tempdir()
+
+  # Initialise list
+  rastList <- list()
+
+  # Loop over properties
   for (p in prop) {
-    #NI
+
+    # NI
     if (dlNI) {
       fileNameNI <- paste0("ni", p, ".tif")
       fileUrlNI <- paste0(baseUrl, fileNameNI)
       tempNI <- file.path(tempDir, fileNameNI)
 
-      #check if file exists first
+      # Download if file doesn't exist
       if (!file.exists(tempNI)) {
         tryCatch({
           download.file(fileUrlNI, tempNI, mode = "wb")
@@ -257,20 +265,34 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
         message("File already downloaded this session: ", fileNameNI, " — using cached version.")
       }
 
-      #Load the raster whether it was downloaded or already existed
-      if (file.exists(tempNI)) {
-        rastList[[paste0("ni_", p)]] <- rast(tempNI)
+      # Try loading raster
+      r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+
+      if (inherits(r, "try-error") || nlyr(r) == 0) {
+        message("Cached NI file is corrupt or unreadable. Redownloading: ", fileNameNI)
+        file.remove(tempNI)
+        tryCatch({
+          download.file(fileUrlNI, tempNI, mode = "wb")
+          message("Downloaded again: ", fileNameNI)
+        }, error = function(e) {
+          warning("Redownload failed: ", fileNameNI, ". Error: ", e$message)
+        })
+        r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+      }
+
+      if (!inherits(r, "try-error") && nlyr(r) > 0) {
+        rastList[[paste0("ni_", p)]] <- r
       } else {
-        warning("File missing after attempted download: ", fileNameNI)
+        warning("Could not load NI raster for: ", p)
       }
     }
-    #UK
+
+    # UK
     if (dlUK) {
       fileNameUK <- paste0("uk", p, ".tif")
       fileUrlUK <- paste0(baseUrl, fileNameUK)
       tempUK <- file.path(tempDir, fileNameUK)
 
-      #Check if file exists first
       if (!file.exists(tempUK)) {
         tryCatch({
           download.file(fileUrlUK, tempUK, mode = "wb")
@@ -282,14 +304,27 @@ extract_soil_values <- function(type, df, crs = NULL, prop = NULL) {
         message("File already downloaded this session: ", fileNameUK, " — using cached version.")
       }
 
-      #Load the raster whether it was downloaded or already existed
-      if (file.exists(tempUK)) {
-        rastList[[paste0("uk_", p)]] <- rast(tempUK)
+      r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+
+      if (inherits(r, "try-error") || nlyr(r) == 0) {
+        message("Cached UK file is corrupt or unreadable. Redownloading: ", fileNameUK)
+        file.remove(tempUK)
+        tryCatch({
+          download.file(fileUrlUK, tempUK, mode = "wb")
+          message("Downloaded again: ", fileNameUK)
+        }, error = function(e) {
+          warning("Redownload failed: ", fileNameUK, ". Error: ", e$message)
+        })
+        r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+      }
+
+      if (!inherits(r, "try-error") && nlyr(r) > 0) {
+        rastList[[paste0("uk_", p)]] <- r
       } else {
-        warning("File missing after attempted download: ", fileNameUK)
+        warning("Could not load UK raster for: ", p)
       }
     }
-}
+  }
   #Extract soil data
   for (p in prop) {
     if (dlNI & paste0("ni_", p) %in% names(rastList)) {
