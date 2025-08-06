@@ -264,34 +264,37 @@ extract_all_values <- function(type,
     )
     #if no properties are entered, default is all
     if (is.null(soilprops)) {
-      soilprops <- allProp
-    }
-    #Validate property input
-    if (!is.character(soilprops)) {
-      stop(
-        "Properties must be a character vector (e.g., c('clay', 'sand')) or a single string."
-      )
-    }
-    invalprop <- setdiff(soilprops, allProp)
-    if (length(invalprop) > 0) {
-      warning(
-        'The following properties are not available and will be ignored: ',
-        paste(invalprop, collapse = ', ')
-      )
-      #remove any invalid
+      prop <- allProp
+    } else {
+      # validate input
+      if (!is.character(soilprops)) {
+        stop(
+          "Properties must be a character vector (e.g., c('clay', 'sand')) or a single string."
+        )
+      }
+
+      # check for invalid properties
+      invalprop <- setdiff(soilprops, allProp)
       prop <- setdiff(soilprops, invalprop)
-    }
-    # Stop if no valid properties remain
-    if (length(soilprops) == 0) {
-      stop(
-        "No valid properties were selected. Please choose from: ",
-        paste(allProp, collapse = ", ")
-      )
+
+      if (length(invalprop) > 0) {
+        warning(
+          "The following properties are not available and will be ignored: ",
+          paste(invalprop, collapse = ", ")
+        )
+      }
+
+      # stop if no valid properties remain
+      if (length(prop) == 0) {
+        stop(
+          "None of the provided soil properties are valid. Please choose from: ",
+          paste(allProp, collapse = ", ")
+        )
+      }
     }
   }
   #Coordinates
   if (type == 'coords') {
-    message('type is coords')
     isIrish <- crs == 'EPSG:29903'
     isBritish <- crs == 'EPSG:27700'
 
@@ -305,7 +308,7 @@ extract_all_values <- function(type,
       message(
         "Reprojecting your coordinates to British National Grid (EPSG:27700) for extraction."
       )
-      coordsVect <- terra::vect(df[, c("X", "Y")], crs = crs)
+      coordsVect <- terra::vect(df, geom = c("X", "Y"), crs = crs)
       transformedCoords <- terra::project(coordsVect, "EPSG:27700")
 
       df$X_transformed <- terra::geom(transformedCoords)[, "x"]
@@ -420,7 +423,7 @@ extract_all_values <- function(type,
     if (length(failedRefs) > 0) {
       warning(
         "Coordinates could not be returned for the following references: ",
-        paste(failedRefs, collapse = ", "),
+        paste(failedRefs$gridRef, collapse = ", "),
         ". NA values were returned instead."
       )
     }
@@ -434,8 +437,6 @@ extract_all_values <- function(type,
 
   #soils
   if (soil) {
-    #list all soil properties
-    prop <- soilprops
     #Download data from Zenodo
     baseUrl <- "https://zenodo.org/records/14973735/files/"
 
@@ -450,7 +451,7 @@ extract_all_values <- function(type,
         fileUrlNI <- paste0(baseUrl, fileNameNI)
         tempNI <- file.path(tempDir, fileNameNI)
 
-        #check if file exists first
+        # Download if file doesn't exist
         if (!file.exists(tempNI)) {
           tryCatch({
             download.file(fileUrlNI, tempNI, mode = "wb")
@@ -462,20 +463,34 @@ extract_all_values <- function(type,
           message("File already downloaded this session: ", fileNameNI, " — using cached version.")
         }
 
-        #Load the raster whether it was downloaded or already existed
-        if (file.exists(tempNI)) {
-          rastList[[paste0("ni_", p)]] <- rast(tempNI)
+        # Try loading raster
+        r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+
+        if (inherits(r, "try-error") || nlyr(r) == 0) {
+          message("Cached NI file is corrupt or unreadable. Redownloading: ", fileNameNI)
+          file.remove(tempNI)
+          tryCatch({
+            download.file(fileUrlNI, tempNI, mode = "wb")
+            message("Downloaded again: ", fileNameNI)
+          }, error = function(e) {
+            warning("Redownload failed: ", fileNameNI, ". Error: ", e$message)
+          })
+          r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+        }
+
+        if (!inherits(r, "try-error") && nlyr(r) > 0) {
+          rastList[[paste0("ni_", p)]] <- r
         } else {
-          warning("File missing after attempted download: ", fileNameNI)
+          warning("Could not load NI raster for: ", p)
         }
       }
-      #UK
+
+      # UK
       if (dlUK) {
         fileNameUK <- paste0("uk", p, ".tif")
         fileUrlUK <- paste0(baseUrl, fileNameUK)
         tempUK <- file.path(tempDir, fileNameUK)
 
-        #Check if file exists first
         if (!file.exists(tempUK)) {
           tryCatch({
             download.file(fileUrlUK, tempUK, mode = "wb")
@@ -487,11 +502,24 @@ extract_all_values <- function(type,
           message("File already downloaded this session: ", fileNameUK, " — using cached version.")
         }
 
-        #Load the raster whether it was downloaded or already existed
-        if (file.exists(tempUK)) {
-          rastList[[paste0("uk_", p)]] <- rast(tempUK)
+        r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+
+        if (inherits(r, "try-error") || nlyr(r) == 0) {
+          message("Cached UK file is corrupt or unreadable. Redownloading: ", fileNameUK)
+          file.remove(tempUK)
+          tryCatch({
+            download.file(fileUrlUK, tempUK, mode = "wb")
+            message("Downloaded again: ", fileNameUK)
+          }, error = function(e) {
+            warning("Redownload failed: ", fileNameUK, ". Error: ", e$message)
+          })
+          r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+        }
+
+        if (!inherits(r, "try-error") && nlyr(r) > 0) {
+          rastList[[paste0("uk_", p)]] <- r
         } else {
-          warning("File missing after attempted download: ", fileNameUK)
+          warning("Could not load UK raster for: ", p)
         }
       }
     }
@@ -553,8 +581,9 @@ extract_all_values <- function(type,
       fileName <- paste0(year, region, suffix, ".tif")
       fileUrl <- paste0(baseUrl, fileName)
       tempPath <- file.path(tempDir, fileName)
-      #Check if exists
-      if (!file.exists(tempPath)){
+
+      #Check if file exists
+      if (!file.exists(tempPath)) {
         tryCatch({
           download.file(fileUrl, tempPath, mode = "wb")
           message("Downloaded: ", fileName)
@@ -562,14 +591,30 @@ extract_all_values <- function(type,
           warning("Failed to download: ", fileName, ". Error: ", e$message)
         })
       } else {
-        message("File already downloaded during this session ", fileName, " - using cached version.")
+        message("File already downloaded during this session: ", fileName, " — using cached version.")
       }
-      if(file.exists(tempPath)){
-        r <- terra::rast(tempPath)
+
+      #Try loading the raster
+      r <- suppressWarnings(try(terra::rast(tempPath), silent = TRUE))
+
+      if (inherits(r, "try-error") || terra::nlyr(r) == 0) {
+        message("Cached file is corrupt or unreadable. Redownloading: ", fileName)
+        file.remove(tempPath)
+        tryCatch({
+          download.file(fileUrl, tempPath, mode = "wb")
+          message("Downloaded again: ", fileName)
+        }, error = function(e) {
+          warning("Redownload failed: ", fileName, ". Error: ", e$message)
+        })
+        r <- suppressWarnings(try(terra::rast(tempPath), silent = TRUE))
+      }
+
+      if (!inherits(r, "try-error") && terra::nlyr(r) > 0) {
+        return(r)
       } else {
-        warning("File missing after attempted download: ", fileName)
+        warning("Could not load raster for: ", fileName)
+        return(NULL)
       }
-      return(r)
     }
 
     #initialise list
@@ -763,63 +808,91 @@ extract_all_values <- function(type,
     rastList <- list()
 
 
-    #dl rasters
+    #Download and load rasters
     for (y in inputYears) {
+
       if (dlNI) {
         fileNameNI <- paste0("ni_climate_", y, ".nc")
         fileUrlNI <- paste0(baseUrl, fileNameNI)
         tempNI <- file.path(tempDir, fileNameNI)
+
         if (!file.exists(tempNI)) {
           tryCatch({
             download.file(fileUrlNI, tempNI, mode = "wb")
-            message("Downloaded: ", fileUrlNI)
+            message("Downloaded: ", fileNameNI)
           }, error = function(e) {
-            warning("Failed to download: ",
-                    fileNameNI,
-                    ". Error: ",
-                    e$message)
+            warning("Failed to download: ", fileNameNI, " — ", e$message)
+            next
           })
         } else {
-          message(
-            "File already downloaded during ths session ",
-            fileNameNI,
-            " - using cached version."
-          )
+          message("Using cached version: ", fileNameNI)
         }
-        if (file.exists(tempNI)) {
-          tempNI <- rast(tempNI)
-          matching <- names(tempNI)[names(tempNI) %in% lnames]
-          tempNI <- tempNI[[matching]]
-          rastList[[paste0("ni_", y)]] <- tempNI
+
+        r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+
+        if (inherits(r, "try-error") || nlyr(r) == 0) {
+          message("Corrupt file detected: ", fileNameNI, ". Redownloading.")
+          file.remove(tempNI)
+
+          tryCatch({
+            download.file(fileUrlNI, tempNI, mode = "wb")
+            message("Redownloaded: ", fileNameNI)
+          }, error = function(e) {
+            warning("Redownload failed: ", fileNameNI, " — ", e$message)
+            next
+          })
+
+          r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
+          if (inherits(r, "try-error") || nlyr(r) == 0) {
+            warning("Still invalid after redownload: ", fileNameNI)
+            next
+          }
         }
+
+        matching <- names(r)[names(r) %in% lnames]
+        rastList[[paste0("ni_", y)]] <- r[[matching]]
       }
+
       if (dlUK) {
         fileNameUK <- paste0("uk_climate_", y, ".nc")
         fileUrlUK <- paste0(baseUrl, fileNameUK)
         tempUK <- file.path(tempDir, fileNameUK)
+
         if (!file.exists(tempUK)) {
           tryCatch({
             download.file(fileUrlUK, tempUK, mode = "wb")
-            message("Downloaded: ", fileUrlUK)
+            message("Downloaded: ", fileNameUK)
           }, error = function(e) {
-            warning("Failed to download: ",
-                    fileNameUK,
-                    ". Error: ",
-                    e$message)
+            warning("Failed to download: ", fileNameUK, " — ", e$message)
+            next
           })
         } else {
-          message(
-            "File already downloaded during this session ",
-            fileNameUK,
-            " - using cached version."
-          )
+          message("Using cached version: ", fileNameUK)
         }
-        if (file.exists(tempUK)) {
-          tempUK <- rast(tempUK)
-          matching <- names(tempUK)[names(tempUK) %in% lnames]
-          tempUK <- tempUK[[matching]]
-          rastList[[paste0("uk_", y)]] <- tempUK
+
+        r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+
+        if (inherits(r, "try-error") || nlyr(r) == 0) {
+          message("Corrupt file detected: ", fileNameUK, ". Redownloading.")
+          file.remove(tempUK)
+
+          tryCatch({
+            download.file(fileUrlUK, tempUK, mode = "wb")
+            message("Redownloaded: ", fileNameUK)
+          }, error = function(e) {
+            warning("Redownload failed: ", fileNameUK, " — ", e$message)
+            next
+          })
+
+          r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
+          if (inherits(r, "try-error") || nlyr(r) == 0) {
+            warning("Still invalid after redownload: ", fileNameUK)
+            next
+          }
         }
+
+        matching <- names(r)[names(r) %in% lnames]
+        rastList[[paste0("uk_", y)]] <- r[[matching]]
       }
     }
     annualseasonList <- list()
@@ -930,15 +1003,6 @@ extract_all_values <- function(type,
                                   layerNames <= yearEnd)
           #warnings for incomplete years
           if (length(annualLayers) < 12) {
-            warning(
-              paste(
-                'Incomplete annual data from month',
-                startmonth,
-                ', year',
-                y,
-                '- skipping'
-              )
-            )
             next
           }
           annualRast <- app(x[[annualLayers]], aggFunct, na.rm = TRUE)
@@ -953,7 +1017,7 @@ extract_all_values <- function(type,
       }
       #extract annual data using the new list of rasters
       #perform extraction
-      message("Extracting annual values. This may take a while.")
+      message("Extracting annual values.")
       for (i in seq_len(nrow(resultDf))) {
         rowYear <- as.numeric(resultDf$year[i])
         rowMonth <- sprintf("%02d", as.numeric(resultDf$month[i]))
@@ -1006,6 +1070,7 @@ extract_all_values <- function(type,
 
     #handling if seasonal is selected
     if ('seasonal' %in% climtime) {
+      message("Extracting seasonal values.")
       seasonalRastList <- list()
 
       #function to determine the correct season year range
@@ -1071,7 +1136,7 @@ extract_all_values <- function(type,
           return(prevSeasons)
         }
 
-        message("Extracting seasonal values.")
+
         for(y in unique(years)) {
           for(season in names(seasonsDef)) {
             seasonMonths <- seasonsDef[[season]]
