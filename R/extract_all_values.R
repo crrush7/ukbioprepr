@@ -88,7 +88,6 @@
 #' ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
 #' ‘grassagg’ for grasses and \cr
 #' ‘upland’ for upland classes \cr
-#' For more information on these, please read the accompanying documentation. \cr
 #' If climate = TRUE, columns will be available for the variable and time period e.g. monthly_tas, winter_rain, annual_tasmin.
 #' @export
 
