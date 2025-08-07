@@ -45,19 +45,19 @@ Soil property data products are derived from SoilGrids: <https://soilgrids.org>\
 
 ### Climate Variables
 
-You can request:\
-- **Mean Temperature** (`tas`)\
-- **Maximum Temperature** (`tasmax`)\
-- **Minimum Temperature** (`tasmin`)\
-- **Precipitation** (`rain`)\
+You can request: \
+- **Mean Temperature** (`tas`) \
+- **Maximum Temperature** (`tasmax`) \
+- **Minimum Temperature** (`tasmin`) \
+- **Precipitation** (`rain`) \
 \
-Available time periods:\
-- Monthly\
-- Seasonal\
+Available time periods: \
+- Monthly \
+- Seasonal \
 - Annual\
 \
 Climate variable data products are derrived from the Met Office HadUKGrid: <https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets>\
-\
+
 
 ### Land Cover
 
