@@ -49,7 +49,7 @@ You can request:
 - **Mean Temperature** (`tas`) 
 - **Maximum Temperature** (`tasmax`) 
 - **Minimum Temperature** (`tasmin`) 
-- **Precipitation** (`rain`) \
+- **Precipitation** (`rain`) 
 
 Available time periods: 
 - Monthly 
