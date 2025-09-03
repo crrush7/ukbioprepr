@@ -18,11 +18,11 @@ Install from GitHub
 
 ## Data Product Information
 
-The `ukbioprepr` package provides access to several classes of data products.
+The `ukbioprepr` package provides access to several classes of data products. All data products are available at 1 km resolution. 
 
 ### Soil Properties
 
-All soil properties are available at a range of depths: 0-5 cm, 5-15 cm, 15-30 cm, 30-60 cm, 60-100 cm, 100-200 cm, except for Organic Carbon Stocks (ocs) which is available only at 0-3 cm depth.
+All soil properties are available at a range of depths: 0-5 cm, 5-15 cm, 15-30 cm, 30-60 cm, 60-100 cm, 100-200 cm, except for Organic Carbon Stocks (ocs) which is available only at 0-3 cm depth. Soil property codes correspond to names of properties in either raster layers or outputted data frames. 
 
 | Code     | Description                                    |
 |----------|------------------------------------------------|
@@ -62,7 +62,7 @@ Climate variable data products are derived from the Met Office HadUKGrid: <https
 ### Land Cover
 
 There are two sets of land cover data products: 2000-2023 and 2015-2023.\
-The latter contain more detailed classes whilst the former has some aggregated classes due to changes in classification in original data sources.\
+The latter contain more detailed classes whilst the former has some aggregated classes due to changes in classification in original data sources. Land cover codes correspond to names of cover classes in either raster layers or outputted data frames. \
 \
 \
 **2015 - 2023 Land Cover Classes**

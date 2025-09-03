@@ -3,7 +3,7 @@
 #' This function extracts values of chosen climate variables from 1km resolution raster files over a specified time period. Raster files are stored in an online repository, therefore this function relies on an internet connection.
 #' Raster files cover climate variables from 1999 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
 #' These data products were created using original data products from UK's Met Office HadUK Grid.
-#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends.\cr
 #' @import terra
 #' @import igr
 #' @import rnrfa

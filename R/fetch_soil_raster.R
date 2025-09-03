@@ -5,6 +5,7 @@
 #' Output rasters are in line with grid of chosen region. \cr
 #' Users can choose from specific soil properties. \cr
 #' The output is a list of rasters, with a raster for each property, with layers corresponding to all available depths at 1km resolution. \cr
+#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 #' @import terra
 # Arguments:
 #' @param   reg   - Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid

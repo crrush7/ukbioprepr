@@ -4,7 +4,7 @@
 #' Raster files cover climate variables from 1999 - 2023, soil properties at a range of depths and % cover of land classes between 2000 - 2023. \cr
 #' Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.
 #' These raster data products have been created using original datasets from SoilGrids250m 2.0 for soils, HadUK Grid by UK Met Office for climate, and UK's Centre for Ecology and Hydrology for land cover.
-#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+#' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 #' @import terra
 #' @import igr
 #' @import rnrfa
