@@ -56,7 +56,7 @@ Available time periods:
 - Seasonal 
 - Annual\
 \
-Climate variable data products are derrived from the Met Office HadUKGrid: <https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets>\
+Climate variable data products are derived from the Met Office HadUKGrid: <https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets>\
 
 
 ### Land Cover
@@ -111,7 +111,7 @@ The latter contain more detailed classes whilst the former has some aggregated c
 | sub      | Suburban               |
 | upland   | Aggregated Upland      |
 
-Land cover data products are percentage cover and derived from the UK Centre for Hydrology and Ecology: <https://www.ceh.ac.uk/data/ukceh-land-cover-maps>
+Land cover data products are percentage cover and derived from the UK Centre for Ecology and Hydrology: <https://www.ceh.ac.uk/data/ukceh-land-cover-maps>
 
 ------------------------------------------------------------------------
 
@@ -185,4 +185,6 @@ allres <- extract_all_values(
 )
 ```
 
-## License
+## Issues and Contributions 
+
+If you have any issues, or wish to make suggestions or contributions, please contact: 
