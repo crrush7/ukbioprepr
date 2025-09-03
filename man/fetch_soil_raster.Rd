@@ -35,4 +35,5 @@ Raster files are of all of the United Kingdom in British National Grid (EPSG:277
 Output rasters are in line with grid of chosen region. \cr
 Users can choose from specific soil properties. \cr
 The output is a list of rasters, with a raster for each property, with layers corresponding to all available depths at 1km resolution. \cr
+Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 }

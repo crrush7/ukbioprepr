@@ -53,5 +53,5 @@ Raster files cover land cover percentage summaries from 2000 - 2023. Raster file
 These data products were created using original raster files of land cover of Great Britain and Northern Ireland by UK Centre for Ecology and Hydrology.
 There are two sets of land cover rasters: from 2000 - 2023 and 2015 - 2023. \cr
 From 2000, there are less land cover classes, than between 2015 - 2023, given the original datasets. Some classes are aggregated, for example aggregated grasslands class, or upland habitats. Which set of land cover rasters are used in the extraction is determined by the years covered in the user’s input data frame. Users will be warned.
-Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 }

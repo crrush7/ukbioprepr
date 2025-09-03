@@ -43,5 +43,5 @@ Remaining columns are of extracted values and will be named indicating the soil 
 This function extracts values of chosen soil properties from 1km resolution raster files. Raster files are stored in an online repository, therefore this function relies on an internet connection.\cr
 Raster files cover soil properties from 1999 - 2023. Raster files are either of the whole of the United Kingdom in EPSG:27700, British National Grid, or of Northern Ireland in EPSG:29903, Irish Grid.\cr
 These data products have been created using original datasets from SoilGrids250m2.0
-Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x)
+Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends.\cr
 }

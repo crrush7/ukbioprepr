@@ -50,5 +50,6 @@ If ‘startyear’ is before 2015, the class column names would instead be: \cr
 ‘ara’, ‘blw’, ‘cw’, ‘fen’, ‘fw’, ‘lr’, ‘ls’, ‘slr’, ‘sls’, ‘sm’, ‘sub’, ‘sw’ and ‘urb’ as above and two aggregated classes of \cr
 ‘grassagg’ for grasses and \cr
 ‘upland’ for upland classes \cr
+ Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends.\cr
 For more information on these, please read the accompanying documentation.\cr
 }

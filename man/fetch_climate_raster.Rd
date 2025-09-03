@@ -44,5 +44,6 @@ Files are originally monthly but users can choose for output rasters to be month
 Seasonal and annual rasters can be created using min, max, mean or sum as aggregations for example, the annual total rainfall, or the mean seasonal rainfall. \cr
 Included variables are rain 'rain', average temperature 'tas', minimum temperature 'tasmin' and maximum temperature 'tasmax'. \cr
 Rain is measured in (mm) and all temperatures are measured in degrees Celcius. \cr
+Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 These data products were created using original datasets from UK's Met Office HadUk Grid.
 }
