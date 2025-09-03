@@ -12,7 +12,7 @@
 
 Install from GitHub
 
-`remotes::install_github("crrush7/ukbioprepr")`
+`remotes::install_github("XXXX/ukbioprepr")`
 
 ------------------------------------------------------------------------
 
