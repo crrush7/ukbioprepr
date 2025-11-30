@@ -270,7 +270,6 @@ If you use `ukbioprepr` in your research, please cite:
 citation("ukbioprepr")
 ```
 
-**Note:** This package has been accepted for publication. Full citation details will be updated upon publication.
 
 ------------------------------------------------------------------------
 
@@ -280,8 +279,6 @@ Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING
 
 - Reporting bugs
 - Suggesting enhancements  
-- Submitting pull requests
-- Code style guidelines
 
 ------------------------------------------------------------------------
 
@@ -315,7 +312,7 @@ This package integrates data from several important sources:
 - **Climate data:** [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets)  
 - **Land cover data:** [UK Centre for Ecology and Hydrology](https://www.ceh.ac.uk/data/ukceh-land-cover-maps)
 
-We thank these organizations for making their data publicly available.
+We thank these organisations for making their data publicly available.
 
 ------------------------------------------------------------------------
 
