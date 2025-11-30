@@ -384,7 +384,8 @@ citation("ukbioprepr")
 
 ## Contributing
 
-Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+Contributions are welcome! Please see our [Contributing Guidelines](ukbioprepr/.github
+/ISSUE_TEMPLATE) for details on:
 
 - Reporting bugs
 - Suggesting enhancements  
