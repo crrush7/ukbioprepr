@@ -136,21 +136,68 @@ There are two sets of land cover data products: 2000-2023 and 2015-2023. The lat
 
 ```r
 library(ukbioprepr) 
+library(terra)
+library(tidyterra)
+library(ggplot2)
+library(sf)
+library(dplyr)
 
-# Download a raster of seasonal average temperatures in Northern Ireland 
-# between 2010-2020
+
+#Download a raster of seasonal average temperatures in Northern Ireland 
+#between 2010-2013
 ni_seasonal_tas_raster <- fetch_climate_raster(
   reg = 'ni', 
   cv = 'tas', 
-  start = '2010_01', 
-  end = '2020_12', 
+  start = '2010_12', 
+  end = '2013_12', 
   time = 'seasonal', 
   agg = 'mean'
 )
 
-# Download a raster of total annual precipitation in the United Kingdom 
-# between 2005-2008 where annual calculations run from March to February 
-# of the following year
+correct_order <- c(
+  "clim_winter_2010-2011",
+  "clim_spring_2011",
+  "clim_summer_2011",
+  "clim_autumn_2011",
+  "clim_winter_2011-2012",
+  "clim_spring_2012",
+  "clim_summer_2012",
+  "clim_autumn_2012",
+  "clim_winter_2012-2013",
+  "clim_spring_2013",
+  "clim_summer_2013",
+  "clim_autumn_2013"
+)
+
+#Reorder the raster layers
+ni_seasonal_tas_raster <- ni_seasonal_tas_raster[[correct_order]]
+
+#Now plot
+seasonal_plot <- ggplot() +
+  geom_spatraster(data = ni_seasonal_tas_raster) +
+  facet_wrap(~factor(lyr, levels = correct_order), ncol = 4) +
+  scale_fill_viridis_c(option = "plasma", name = "Temperature (°C)", na.value = "transparent") +
+  coord_sf(crs = st_crs(29903), datum = st_crs(29903)) +
+  guides(x = guide_axis(n.dodge = 1)) +  
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 7),
+    strip.text = element_text(size = 9, face = "bold"),
+    legend.position = "bottom",
+    legend.key.width = unit(2, "cm"),
+    panel.spacing = unit(0.5, "lines")
+  ) +
+  labs(
+    title = "Seasonal Temperature Averages - Northern Ireland",
+    x = "Easting (m)",
+    y = "Northing (m)"
+  )
+seasonal_plot
+
+#Download a raster of total annual precipitation in the United Kingdom 
+#between 2005-2016 where annual calculations run from March to February 
+#of the following year
 uk_annual_rain_raster <- fetch_climate_raster(
   reg = 'uk', 
   cv = 'rain', 
@@ -159,9 +206,74 @@ uk_annual_rain_raster <- fetch_climate_raster(
   time = 'annual', 
   agg = 'sum'
 )
-```
+#Convert to dataframe
+precip_df <- as.data.frame(uk_annual_rain_raster, xy = TRUE)
 
-### Extract Soil Values
+#Reshape to long format
+precip_long <- precip_df %>%
+  pivot_longer(cols = -c(x, y), 
+               names_to = "layer", 
+               values_to = "precipitation")
+
+#Plot
+precip_plot <- ggplot(precip_long, aes(x = x, y = y, fill = precipitation)) +
+  geom_raster() +
+  facet_wrap(~layer, ncol = 4) +
+  scale_fill_viridis_c(option = "viridis", name = "Precipitation (mm)", na.value = "transparent") +
+  coord_equal() +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 7),
+    strip.text = element_text(size = 9, face = "bold"),
+    legend.position = "bottom",
+    legend.key.width = unit(2, "cm"),
+    panel.spacing = unit(0.5, "lines")
+  ) +
+  labs(
+    title = "Annual Precipitation - United Kingdom",
+    x = "Easting (m)",
+    y = "Northing (m)"
+  )
+
+precip_plot
+```
+### Fetch Soil Rasters
+```r
+#fetching raster on pH at range of depths
+uk_soil <- fetch_soil_raster('uk', prop = 'phh2o')
+#Convert to dataframe
+soil_df <- as.data.frame(uk_soil, xy = TRUE)
+
+#Reshape to long format
+soil_long <- soil_df %>%
+  pivot_longer(cols = -c(x, y), 
+               names_to = "layer", 
+               values_to = "pH") %>%
+  mutate(layer = factor(layer, levels = names(uk_soil)))
+
+#Plot
+ph_plot <- ggplot(soil_long, aes(x = x, y = y, fill = pH)) +
+  geom_raster() +
+  facet_wrap(~layer, ncol = 3) +
+  scale_fill_viridis_c(option = "viridis", name = "pH", na.value = "transparent") +
+  coord_equal() +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 7),
+    strip.text = element_text(size = 9, face = "bold"),
+    legend.position = "bottom",
+    legend.key.width = unit(2, "cm"),
+    panel.spacing = unit(0.5, "lines")
+  ) +
+  labs(
+    title = "pH - United Kingdom",
+    x = "Easting (m)",
+    y = "Northing (m)"
+  )
+ph_plot
+```### Extract Soil Values
 
 ```r
 # Extract values for selected soil properties using grid references 
