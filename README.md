@@ -384,11 +384,10 @@ citation("ukbioprepr")
 
 ## Contributing
 
-Contributions are welcome! Please see our [Contributing Guidelines](ukbioprepr/.github
-/ISSUE_TEMPLATE) for details on:
+Contributions are welcome! 
 
-- Reporting bugs
-- Suggesting enhancements  
+- **Bug reports:** Use our [bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
+- **Feature requests:** Use our [feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
 
 ------------------------------------------------------------------------
 
