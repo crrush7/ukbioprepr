@@ -1,10 +1,9 @@
-Package: ukbioprepr
+ackage: ukbioprepr
 Type: Package
 Title: Preparing Environmental Data for Biodiveristy Modelling in the UK
 Version: 0.1.0
-Author: 
-Maintainer: person("Charlotte R.", "Rush", 
-                  email = "cr23569@essex.ac.uk,
+Authors@R: person("Charlotte R.", "Rush", 
+                  email = "cr23569@essex.ac.uk",
                   role = c("aut", "cre"))
 Description: ukbioprepr provides functions for downloading raster files and extracting data on climate, soil and land cover variables for the United Kingdom. 
   Extraction functions can handle grid references in both Irish Grid for Northern Ireland, and British National Grid for the whole of the UK as well as co-ordinates in different co-ordinate reference systems. 
@@ -19,3 +18,4 @@ Imports: terra, rnrfa, igr
 Suggests: 
     testthat (>= 3.0.0), covr
 Config/testthat/edition: 3
+
