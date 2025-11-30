@@ -36,6 +36,7 @@
 #'  Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends.\cr
 #' For more information on these, please read the accompanying documentation.\cr
 #' @import terra
+#' @importFrom utils download.file
 # Arguments:
 #' @param   reg Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid
 #' @param   startyear The start year for required land cover. Must be numeric and from 2000 - 2023. startyear must be before endyear.
@@ -83,7 +84,7 @@ fetch_landcover_raster <- function(reg, startyear, endyear) {
       }, error = function(e) {
         warning("Failed to download: ", fileName, " — ", e$message)
         message("Skipping year ", y)
-        next
+
       })
     } else {
       message("Using cached version: ", fileName)
@@ -102,14 +103,14 @@ fetch_landcover_raster <- function(reg, startyear, endyear) {
       }, error = function(e) {
         warning("Redownload failed: ", fileName, " — ", e$message)
         message("Skipping year ", y)
-        next
+
       })
 
       r <- suppressWarnings(try(rast(temp), silent = TRUE))
       if (inherits(r, "try-error") || nlyr(r) == 0) {
         warning("Redownloaded file still invalid: ", fileName)
         message("Skipping year ", y)
-        next
+
       }
     }
 

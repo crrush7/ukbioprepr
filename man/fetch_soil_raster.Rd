@@ -7,8 +7,9 @@
 fetch_soil_raster(reg, prop = NULL)
 }
 \arguments{
-\item{reg}{- Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid
-Character vector of all soil properties a user wishes to extract values for. The default is all properties. \cr
+\item{reg}{- Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid}
+
+\item{prop}{- Character vector of all soil properties a user wishes to extract values for. The default is all properties. \cr
 Properties can be the following:\cr
 "ocd", organic carbon density kg m-3 \cr
 "bdod", bulk dens of fine earth fraction kg dm-3 \cr

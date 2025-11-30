@@ -7,6 +7,7 @@
 #' @import terra
 #' @import igr
 #' @import rnrfa
+#' @importFrom utils download.file
 #' @param type Either 'grid' if using grid references or 'coords' if using co-ordinates.
 #' @param df a data frame. \cr
 #' If type = ‘grid,’ df must contain a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. \cr

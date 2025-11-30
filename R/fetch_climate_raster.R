@@ -10,6 +10,7 @@
 #' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 #' These data products were created using original datasets from UK's Met Office HadUk Grid.
 #' @import terra
+#' @importFrom utils download.file
 
 # get climate data by region, variable and date range
 #

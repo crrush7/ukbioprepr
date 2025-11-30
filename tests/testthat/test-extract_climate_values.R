@@ -1,4 +1,4 @@
-# test-extract_all_values.R
+# test-extract_climate_values.R
 library(testthat)
 library(terra)
 
@@ -16,12 +16,12 @@ is_online <- function() {
 
 test_that("function validates data frame input", {
   expect_error(
-    extract_all_values("grid", NULL),
+    extract_climate_values("grid", NULL),
     "Input must be a data frame"
   )
 
   expect_error(
-    extract_all_values("grid", "not a dataframe"),
+    extract_climate_values("grid", "not a dataframe"),
     "Input must be a data frame"
   )
 })
@@ -30,8 +30,8 @@ test_that("function validates type parameter", {
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("invalid", df),
-    "Invalid type"
+    extract_climate_values("invalid", df, time = "monthly"),
+    "'type' must be either 'grid' or 'coords'"
   )
 })
 
@@ -39,22 +39,48 @@ test_that("grid type requires gridRef column", {
   df <- data.frame(year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("grid", df),
+    extract_climate_values("grid", df),
     "required columns are missing.*gridRef"
   )
 })
 
-test_that("coords type requires X and Y columns", {
+test_that("grid type requires year and month columns", {
+  df1 <- data.frame(gridRef = "J3480", year = 2020)
+  expect_error(
+    extract_climate_values("grid", df1),
+    "required columns are missing.*month"
+  )
+
+  df2 <- data.frame(gridRef = "J3480", month = 6)
+  expect_error(
+    extract_climate_values("grid", df2),
+    "required columns are missing.*year"
+  )
+})
+
+test_that("coords type requires X, Y, year, month columns", {
   df1 <- data.frame(Y = 100000, year = 2020, month = 6)
   expect_error(
-    extract_all_values("coords", df1, crs = "EPSG:29903"),
+    extract_climate_values("coords", df1, crs = "EPSG:29903"),
     "required columns are missing.*X"
   )
 
   df2 <- data.frame(X = 334000, year = 2020, month = 6)
   expect_error(
-    extract_all_values("coords", df2, crs = "EPSG:29903"),
+    extract_climate_values("coords", df2, crs = "EPSG:29903"),
     "required columns are missing.*Y"
+  )
+
+  df3 <- data.frame(X = 334000, Y = 380000, year = 2020)
+  expect_error(
+    extract_climate_values("coords", df3, crs = "EPSG:29903"),
+    "required columns are missing.*month"
+  )
+
+  df4 <- data.frame(X = 334000, Y = 380000, month = 6)
+  expect_error(
+    extract_climate_values("coords", df4, crs = "EPSG:29903"),
+    "required columns are missing.*year"
   )
 })
 
@@ -62,7 +88,7 @@ test_that("coords type requires CRS parameter", {
   df <- data.frame(X = 334000, Y = 380000, year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("coords", df),
+    extract_climate_values("coords", df),
     "CRS must be provided"
   )
 })
@@ -71,7 +97,7 @@ test_that("coords type requires CRS to start with EPSG:", {
   df <- data.frame(X = 334000, Y = 380000, year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("coords", df, crs = "29903"),
+    extract_climate_values("coords", df, crs = "29903"),
     "crs must start with 'EPSG:'"
   )
 })
@@ -80,149 +106,100 @@ test_that("coords type requires CRS to start with EPSG:", {
 # INPUT VALIDATION TESTS - CLIMATE-SPECIFIC
 # =============================================================================
 
-test_that("climate=TRUE requires year and month columns", {
-  df1 <- data.frame(gridRef = "J3480", year = 2020)
-  expect_error(
-    extract_all_values("grid", df1, climate = TRUE),
-    "required columns are missing.*month"
-  )
-
-  df2 <- data.frame(gridRef = "J3480", month = 6)
-  expect_error(
-    extract_all_values("grid", df2, climate = TRUE),
-    "required columns are missing.*year"
-  )
-})
-
-test_that("climate validates climtime parameter", {
+test_that("time parameter validates correctly", {
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("grid", df, climate = TRUE, climtime = "invalid"),
-    "Invalid 'climtime' value"
+    extract_climate_values("grid", df, time = "invalid"),
+    "Invalid 'time' value"
   )
 })
 
-test_that("climate validates climvar parameter", {
+test_that("climvar parameter validates correctly", {
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("grid", df, climate = TRUE, climvar = "temperature"),
+    extract_climate_values("grid", df, climvar = "temperature", time = "monthly"),
     "Invalid 'climvar' value"
   )
 })
 
-test_that("climate validates annualstartmonth when annual in climtime", {
+test_that("annualstartmonth is required when time includes annual", {
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("grid", df, climate = TRUE, climtime = "annual"),
+    extract_climate_values("grid", df, time = "annual"),
     "'annualstartmonth' must be provided"
   )
+})
+
+test_that("annualstartmonth must be 1-12", {
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
 
   expect_error(
-    extract_all_values("grid", df, climate = TRUE, climtime = "annual", annualstartmonth = 0),
+    extract_climate_values("grid", df, time = "annual", annualstartmonth = 0),
     "'annualstartmonth' must be a numeric value between 1 and 12"
   )
 
   expect_error(
-    extract_all_values("grid", df, climate = TRUE, climtime = "annual", annualstartmonth = 13),
+    extract_climate_values("grid", df, time = "annual", annualstartmonth = 13),
     "'annualstartmonth' must be a numeric value between 1 and 12"
   )
 })
 
-test_that("climate validates year range (2000-2023)", {
-  df1 <- data.frame(gridRef = "J3480", year = 1999, month = 6)
+test_that("annualstartmonth warning when not using annual", {
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+
+  expect_warning(
+    extract_climate_values("grid", df, time = "monthly", annualstartmonth = 1),
+    "'annualstartmonth' is provided but 'time' does not include 'annual'"
+  )
+})
+
+test_that("year must be between 1999 and 2023", {
+  df1 <- data.frame(gridRef = "J3480", year = 1998, month = 6)
   expect_error(
-    extract_all_values("grid", df1, climate = TRUE, climtime = "monthly"),
-    "Invalid year.*2000.*2023"
+    extract_climate_values("grid", df1, time = "monthly"),
+    "'start' year must be between 1999 and 2023"
   )
 
   df2 <- data.frame(gridRef = "J3480", year = 2024, month = 6)
   expect_error(
-    extract_all_values("grid", df2, climate = TRUE, climtime = "monthly"),
-    "Invalid year.*2000.*2023"
+    extract_climate_values("grid", df2, time = "monthly"),
+    "year must be between 1999 and 2023"  # Matches either start or end year error
   )
 })
 
-test_that("climate validates month range (1-12)", {
+test_that("month must be between 1 and 12", {
   df1 <- data.frame(gridRef = "J3480", year = 2020, month = 0)
   expect_error(
-    extract_all_values("grid", df1, climate = TRUE, climtime = "monthly"),
-    "Invalid month.*1.*12"
+    extract_climate_values("grid", df1, time = "monthly"),
+    "month.*must only contain numeric values from 1 to 12"
   )
 
   df2 <- data.frame(gridRef = "J3480", year = 2020, month = 13)
   expect_error(
-    extract_all_values("grid", df2, climate = TRUE, climtime = "monthly"),
-    "Invalid month.*1.*12"
+    extract_climate_values("grid", df2, time = "monthly"),
+    "month.*must only contain numeric values from 1 to 12"
   )
 })
 
-# =============================================================================
-# INPUT VALIDATION TESTS - LANDCOVER-SPECIFIC
-# =============================================================================
-
-test_that("landcover=TRUE requires year column", {
-  df <- data.frame(gridRef = "J3480")
-
-  expect_error(
-    extract_all_values("grid", df, landcover = TRUE, climate = FALSE),
-    "required columns are missing.*year"
-  )
-})
-
-test_that("landcover validates year range (2000-2023)", {
-  df1 <- data.frame(gridRef = "J3480", year = 1999)
-  expect_error(
-    extract_all_values("grid", df1, landcover = TRUE, climate = FALSE),
-    "Invalid year.*2000.*2023"
-  )
-
-  df2 <- data.frame(gridRef = "J3480", year = 2024)
-  expect_error(
-    extract_all_values("grid", df2, landcover = TRUE, climate = FALSE),
-    "Invalid year.*2000.*2023"
-  )
-})
-
-# =============================================================================
-# INPUT VALIDATION TESTS - SOIL-SPECIFIC
-# =============================================================================
-
-test_that("soil validates soilprops parameter", {
-  df <- data.frame(gridRef = "J3480")
-
-  expect_error(
-    extract_all_values("grid", df, soil = TRUE, soilprops = 123,
-                       landcover = FALSE, climate = FALSE),
-    "Properties must be a character vector"
-  )
-})
-
-test_that("soil warns about invalid properties", {
+test_that("time parameter accepts valid values", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = "J3480")
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
 
-  expect_warning(
-    extract_all_values("grid", df, soil = TRUE, soilprops = c("clay", "invalid"),
-                       landcover = FALSE, climate = FALSE),
-    "not available"
-  )
-})
+  expect_no_error({
+    extract_climate_values("grid", df, time = "monthly")
+  })
 
-test_that("soil stops if all properties are invalid", {
-  df <- data.frame(gridRef = "J3480")
+  expect_no_error({
+    extract_climate_values("grid", df, time = "seasonal")
+  })
 
-  expect_warning(
-    expect_error(
-      extract_all_values("grid", df, soil = TRUE, soilprops = c("fake1", "fake2"),
-                         landcover = FALSE, climate = FALSE),
-      "None of the provided soil properties are valid"
-    ),
-    "not available"
-  )
+  expect_no_error({
+    extract_climate_values("grid", df, time = "annual", annualstartmonth = 1)
+  })
 })
 
 # =============================================================================
@@ -232,8 +209,8 @@ test_that("soil stops if all properties are invalid", {
 test_that("Irish grid references are detected correctly", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = "J3480")
-  result <- extract_all_values("grid", df, soil = TRUE, landcover = FALSE, climate = FALSE)
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, time = "monthly")
 
   expect_equal(result$gridType[1], "Irish Grid")
 })
@@ -241,8 +218,8 @@ test_that("Irish grid references are detected correctly", {
 test_that("British grid references are detected correctly", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = "NT1565")
-  result <- extract_all_values("grid", df, soil = TRUE, landcover = FALSE, climate = FALSE)
+  df <- data.frame(gridRef = "NT1565", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, time = "monthly")
 
   expect_equal(result$gridType[1], "British National Grid")
 })
@@ -250,21 +227,21 @@ test_that("British grid references are detected correctly", {
 test_that("mixed grid references produce message", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = c("J3480", "NT1565"))
+  df <- data.frame(gridRef = c("J3480", "NT1565"), year = 2020, month = 6)
 
   expect_message(
-    extract_all_values("grid", df, soil = TRUE, landcover = FALSE, climate = FALSE),
-    "both Irish and British National Grid"
+    extract_climate_values("grid", df, time = "monthly"),
+    "both Irish and British"
   )
 })
 
 test_that("invalid grid references produce warning", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = c("INVALID", "J3480"))
+  df <- data.frame(gridRef = c("INVALID", "J3480"), year = 2020, month = 6)
 
   expect_warning(
-    extract_all_values("grid", df, soil = TRUE, landcover = FALSE, climate = FALSE),
+    extract_climate_values("grid", df, time = "monthly"),
     "Coordinates could not be returned"
   )
 })
@@ -273,24 +250,22 @@ test_that("invalid grid references produce warning", {
 # COORDINATE TRANSFORMATION TESTS
 # =============================================================================
 
-test_that("Irish Grid coords retain original CRS", {
+test_that("Irish Grid coordinates retain original CRS", {
   skip_if_not(is_online())
 
-  df <- data.frame(X = 334000, Y = 380000)
-  result <- extract_all_values("coords", df, crs = "EPSG:29903",
-                               soil = TRUE, landcover = FALSE, climate = FALSE)
+  df <- data.frame(X = 334000, Y = 380000, year = 2020, month = 6)
+  result <- extract_climate_values("coords", df, crs = "EPSG:29903", time = "monthly")
 
   expect_equal(result$X_transformed[1], result$X[1])
   expect_equal(result$Y_transformed[1], result$Y[1])
   expect_equal(result$gridType[1], "Irish Grid")
 })
 
-test_that("British Grid coords retain original CRS", {
+test_that("British Grid coordinates retain original CRS", {
   skip_if_not(is_online())
 
-  df <- data.frame(X = 315000, Y = 665000)
-  result <- extract_all_values("coords", df, crs = "EPSG:27700",
-                               soil = TRUE, landcover = FALSE, climate = FALSE)
+  df <- data.frame(X = 315000, Y = 665000, year = 2020, month = 6)
+  result <- extract_climate_values("coords", df, crs = "EPSG:27700", time = "monthly")
 
   expect_equal(result$X_transformed[1], result$X[1])
   expect_equal(result$Y_transformed[1], result$Y[1])
@@ -300,11 +275,10 @@ test_that("British Grid coords retain original CRS", {
 test_that("other CRS coordinates are reprojected with message", {
   skip_if_not(is_online())
 
-  df <- data.frame(X = -6.0, Y = 54.5)
+  df <- data.frame(X = -6.0, Y = 54.5, year = 2020, month = 6)
 
   expect_message(
-    result <- extract_all_values("coords", df, crs = "EPSG:4326",
-                                 soil = TRUE, landcover = FALSE, climate = FALSE),
+    result <- extract_climate_values("coords", df, crs = "EPSG:4326", time = "monthly"),
     "Reprojecting.*British National Grid"
   )
 
@@ -313,170 +287,209 @@ test_that("other CRS coordinates are reprojected with message", {
 })
 
 # =============================================================================
-# SINGLE EXTRACTION TESTS
+# MONTHLY EXTRACTION TESTS
 # =============================================================================
 
-test_that("soil-only extraction works", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480")
-  result <- extract_all_values("grid", df,
-                               soil = TRUE, soilprops = "clay",
-                               landcover = FALSE, climate = FALSE)
-
-  expect_true(is.data.frame(result))
-  # Soil columns include depth (e.g., "clay_D0to5cm", "clay_D5to15cm")
-  expect_true(any(grepl("clay_D", colnames(result))))
-  expect_false(any(grepl("monthly|annual|blw|cw|ara", colnames(result))))
-})
-
-test_that("landcover-only extraction works", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = TRUE, climate = FALSE)
-
-  expect_true(is.data.frame(result))
-  # Landcover creates columns for specific classes (e.g., "blw", "cw", "ara", "ig", etc.)
-  # For years 2015+, should have 21 landcover class columns
-  landcover_cols <- c("blw", "cw", "ara", "ig", "ng", "cg", "ag", "fen", "hea",
-                      "hgl", "bog", "inr", "sw", "fw", "slr", "sls", "lr", "ls",
-                      "sm", "urb", "sub")
-  expect_true(any(landcover_cols %in% colnames(result)))
-  expect_false(any(grepl("clay|sand|monthly|annual", colnames(result))))
-})
-
-test_that("climate-only extraction works", {
+test_that("monthly extraction works for single climate variable", {
   skip_if_not(is_online())
 
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = TRUE,
-                               climtime = "monthly")
+  result <- extract_climate_values("grid", df, climvar = "rain", time = "monthly")
 
-  expect_true(is.data.frame(result))
-  expect_true(any(grepl("monthly_", colnames(result))))
-  expect_false(any(grepl("clay|sand|landcover", colnames(result))))
+  expect_true("monthly_rain" %in% colnames(result))
+  expect_true(is.numeric(result$monthly_rain))
 })
 
-# =============================================================================
-# COMBINED EXTRACTION TESTS
-# =============================================================================
-
-test_that("soil + landcover extraction works", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020)
-  result <- extract_all_values("grid", df,
-                               soil = TRUE, soilprops = "clay",
-                               landcover = TRUE, climate = FALSE)
-
-  # Soil columns include depth (e.g., "clay_D0to5cm", "clay_D5to15cm")
-  expect_true(any(grepl("clay_D", colnames(result))))
-  # Landcover columns are class names (e.g., "blw", "cw", "ara")
-  landcover_cols <- c("blw", "cw", "ara", "ig", "urb", "sub")
-  expect_true(any(landcover_cols %in% colnames(result)))
-  expect_false(any(grepl("monthly|annual", colnames(result))))
-})
-
-test_that("soil + climate extraction works", {
+test_that("monthly extraction works for multiple climate variables", {
   skip_if_not(is_online())
 
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = TRUE, soilprops = "sand",
-                               landcover = FALSE, climate = TRUE,
-                               climtime = "monthly")
+  result <- extract_climate_values("grid", df,
+                                   climvar = c("rain", "tas", "tasmin", "tasmax"),
+                                   time = "monthly")
 
-  # Soil with depth
-  expect_true(any(grepl("sand_D", colnames(result))))
-  expect_true(any(grepl("monthly_", colnames(result))))
-  expect_false(any(grepl("blw|cw|ara", colnames(result))))
+  expect_true("monthly_rain" %in% colnames(result))
+  expect_true("monthly_tas" %in% colnames(result))
+  expect_true("monthly_tasmin" %in% colnames(result))
+  expect_true("monthly_tasmax" %in% colnames(result))
 })
 
-test_that("landcover + climate extraction works", {
+test_that("monthly extraction works with coords type", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = TRUE, climate = TRUE,
-                               climtime = "monthly")
+  df <- data.frame(X = 334000, Y = 380000, year = 2020, month = 6)
+  result <- extract_climate_values("coords", df, crs = "EPSG:29903",
+                                   climvar = "tas", time = "monthly")
 
-  # Landcover columns (e.g., "blw", "urb", "ara")
-  landcover_cols <- c("blw", "cw", "ara", "urb", "sub")
-  expect_true(any(landcover_cols %in% colnames(result)))
-  # Climate columns (e.g., "monthly_tas", "monthly_rain")
-  expect_true(any(grepl("monthly_", colnames(result))))
-  expect_false(any(grepl("clay|sand", colnames(result))))
-})
-
-test_that("all three extractions work together", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = TRUE, soilprops = "clay",
-                               landcover = TRUE, climate = TRUE,
-                               climtime = "monthly")
-
-  # Soil columns with depth (e.g., "clay_D0to5cm")
-  expect_true(any(grepl("clay_D", colnames(result))))
-  # Landcover class columns (e.g., "blw", "urb")
-  landcover_cols <- c("blw", "cw", "ara", "urb")
-  expect_true(any(landcover_cols %in% colnames(result)))
-  # Climate columns (e.g., "monthly_tas")
-  expect_true(any(grepl("monthly_", colnames(result))))
+  expect_true("monthly_tas" %in% colnames(result))
 })
 
 # =============================================================================
-# OUTPUT STRUCTURE TESTS
+# ANNUAL EXTRACTION TESTS
 # =============================================================================
 
-test_that("output has correct structure for grid type", {
+test_that("annual extraction works with January start", {
   skip_if_not(is_online())
 
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df, climate = TRUE, climtime = "monthly")
+  result <- extract_climate_values("grid", df, climvar = "rain",
+                                   time = "annual", annualstartmonth = 1)
 
-  expect_true(is.data.frame(result))
+  expect_true("annual_rain" %in% colnames(result))
+  expect_true(is.numeric(result$annual_rain))
+})
+
+test_that("annual extraction works with custom start month", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "tas",
+                                   time = "annual", annualstartmonth = 4)
+
+  expect_true("annual_tas" %in% colnames(result))
+})
+
+test_that("annual extraction works with December start", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "rain",
+                                   time = "annual", annualstartmonth = 12)
+
+  expect_true("annual_rain" %in% colnames(result))
+})
+
+test_that("annual extraction works for multiple climate variables", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df,
+                                   climvar = c("rain", "tas", "tasmin", "tasmax"),
+                                   time = "annual", annualstartmonth = 1)
+
+  expect_true("annual_rain" %in% colnames(result))
+  expect_true("annual_tas" %in% colnames(result))
+  expect_true("annual_tasmin" %in% colnames(result))
+  expect_true("annual_tasmax" %in% colnames(result))
+})
+
+# =============================================================================
+# SEASONAL EXTRACTION TESTS
+# =============================================================================
+
+test_that("seasonal extraction works for single variable", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "rain", time = "seasonal")
+
+  expect_true(any(grepl("(winter|spring|summer|autumn)_rain", colnames(result))))
+})
+
+test_that("seasonal extraction works for multiple variables", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df,
+                                   climvar = c("rain", "tas"),
+                                   time = "seasonal")
+
+  expect_true(any(grepl("_rain", colnames(result))))
+  expect_true(any(grepl("_tas", colnames(result))))
+})
+
+# =============================================================================
+# COMBINED TIME AGGREGATION TESTS
+# =============================================================================
+
+test_that("monthly and annual extraction together works", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "rain",
+                                   time = c("monthly", "annual"), annualstartmonth = 1)
+
+  expect_true("monthly_rain" %in% colnames(result))
+  expect_true("annual_rain" %in% colnames(result))
+})
+
+test_that("monthly and seasonal extraction together works", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "tas",
+                                   time = c("monthly", "seasonal"))
+
+  expect_true("monthly_tas" %in% colnames(result))
+  expect_true(any(grepl("_tas$", colnames(result))))
+})
+
+test_that("annual and seasonal extraction together works", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "rain",
+                                   time = c("annual", "seasonal"), annualstartmonth = 1)
+
+  expect_true("annual_rain" %in% colnames(result))
+  expect_true(any(grepl("_rain$", colnames(result))))
+})
+
+# =============================================================================
+# OUTPUT STRUCTURE TESTS - GRID TYPE
+# =============================================================================
+
+test_that("output has correct columns for grid type", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, time = "monthly")
+
   expect_true("gridRef" %in% colnames(result))
   expect_true("X_transformed" %in% colnames(result))
   expect_true("Y_transformed" %in% colnames(result))
   expect_true("gridType" %in% colnames(result))
+  expect_true("year" %in% colnames(result))
+  expect_true("month" %in% colnames(result))
 })
 
-test_that("output has correct structure for coords type", {
+test_that("output returns one row per input row", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, time = "monthly")
+
+  expect_equal(nrow(result), nrow(df))
+})
+
+# =============================================================================
+# OUTPUT STRUCTURE TESTS - COORDS TYPE
+# =============================================================================
+
+test_that("output has correct columns for coords type", {
   skip_if_not(is_online())
 
   df <- data.frame(X = 334000, Y = 380000, year = 2020, month = 6)
-  result <- extract_all_values("coords", df, crs = "EPSG:29903",
-                               climate = TRUE, climtime = "monthly")
+  result <- extract_climate_values("coords", df, crs = "EPSG:29903", time = "monthly")
 
-  expect_true(is.data.frame(result))
   expect_true("X" %in% colnames(result))
   expect_true("Y" %in% colnames(result))
   expect_true("X_transformed" %in% colnames(result))
   expect_true("Y_transformed" %in% colnames(result))
   expect_true("gridType" %in% colnames(result))
+  expect_true("year" %in% colnames(result))
+  expect_true("month" %in% colnames(result))
 })
 
-test_that("output preserves row count", {
+# =============================================================================
+# EDGE CASES
+# =============================================================================
+
+test_that("single row data frame works", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = c("J3480", "J3580", "J3680"))
-  result <- extract_all_values("grid", df, soil = TRUE,
-                               landcover = FALSE, climate = FALSE)
-
-  expect_equal(nrow(result), nrow(df))
-})
-
-test_that("single row input works", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480")
-  result <- extract_all_values("grid", df, soil = TRUE,
-                               landcover = FALSE, climate = FALSE)
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, time = "monthly")
 
   expect_equal(nrow(result), 1)
 })
@@ -484,207 +497,127 @@ test_that("single row input works", {
 test_that("multiple rows work", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = rep("J3480", 5))
-  result <- extract_all_values("grid", df, soil = TRUE,
-                               landcover = FALSE, climate = FALSE)
-
-  expect_equal(nrow(result), 5)
-})
-
-# =============================================================================
-# CLIMATE PARAMETER TESTS
-# =============================================================================
-
-test_that("climate monthly extraction works", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = TRUE,
-                               climvar = "rain", climtime = "monthly")
-
-  expect_true("monthly_rain" %in% colnames(result))
-})
-
-test_that("climate seasonal extraction works", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = TRUE,
-                               climvar = "tas", climtime = "seasonal")
-
-  expect_true(any(grepl("(winter|spring|summer|autumn)_tas", colnames(result))))
-})
-
-test_that("climate annual extraction works with January start", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = TRUE,
-                               climvar = "rain", climtime = "annual",
-                               annualstartmonth = 1)
-
-  expect_true("annual_rain" %in% colnames(result))
-  expect_true(is.numeric(result$annual_rain))
-})
-
-test_that("climate multiple variables work", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = TRUE,
-                               climvar = c("rain", "tas"), climtime = "monthly")
-
-  expect_true("monthly_rain" %in% colnames(result))
-  expect_true("monthly_tas" %in% colnames(result))
-})
-
-test_that("climate multiple time aggregations work", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = TRUE,
-                               climvar = "tas",
-                               climtime = c("monthly", "annual"),
-                               annualstartmonth = 1)
-
-  expect_true("monthly_tas" %in% colnames(result))
-  expect_true("annual_tas" %in% colnames(result))
-})
-
-# =============================================================================
-# SOIL PARAMETER TESTS
-# =============================================================================
-
-test_that("soil extracts all properties when soilprops = NULL", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480")
-  result <- extract_all_values("grid", df, soil = TRUE, soilprops = NULL,
-                               landcover = FALSE, climate = FALSE)
-
-  # Should have many soil property columns with depths
-  # Check for various properties
-  expect_true(any(grepl("clay_D", colnames(result))))
-  expect_true(any(grepl("sand_D", colnames(result))))
-  expect_true(any(grepl("silt_D", colnames(result))))
-  expect_true(any(grepl("bdod_D", colnames(result))))
-  expect_true(any(grepl("ocd_D", colnames(result))))
-})
-
-test_that("soil extracts only specified properties", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480")
-  result <- extract_all_values("grid", df, soil = TRUE, soilprops = c("clay", "sand"),
-                               landcover = FALSE, climate = FALSE)
-
-  # Should have clay and sand with depths
-  expect_true(any(grepl("clay_D", colnames(result))))
-  expect_true(any(grepl("sand_D", colnames(result))))
-  # Should NOT have silt
-  expect_false(any(grepl("silt_D", colnames(result))))
-})
-
-# =============================================================================
-# LANDCOVER PARAMETER TESTS
-# =============================================================================
-
-test_that("landcover extracts for different years", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = c("J3480", "J3480"), year = c(2015, 2020))
-  result <- extract_all_values("grid", df, soil = FALSE, landcover = TRUE, climate = FALSE)
-
-  expect_equal(nrow(result), 2)
-  # Should have landcover class columns
-  landcover_cols <- c("blw", "cw", "ara", "urb", "sub")
-  expect_true(any(landcover_cols %in% colnames(result)))
-})
-
-test_that("landcover shows message for years < 2015", {
-  skip_if_not(is_online())
-
-  df <- data.frame(gridRef = "J3480", year = 2010)
-
-  expect_message(
-    extract_all_values("grid", df, soil = FALSE, landcover = TRUE, climate = FALSE),
-    "aggregated land cover"
+  df <- data.frame(
+    gridRef = rep("J3480", 10),
+    year = rep(2020, 10),
+    month = rep(6, 10)
   )
+  result <- extract_climate_values("grid", df, time = "monthly")
+
+  expect_equal(nrow(result), 10)
+})
+
+test_that("different months work", {
+  skip_if_not(is_online())
+
+  df <- data.frame(
+    gridRef = c("J3480", "J3480", "J3480"),
+    year = c(2020, 2020, 2020),
+    month = c(1, 6, 12)
+  )
+  result <- extract_climate_values("grid", df, time = "monthly")
+
+  expect_equal(nrow(result), 3)
+})
+
+test_that("year boundaries work", {
+  skip_if_not(is_online())
+
+  df1 <- data.frame(gridRef = "J3480", year = 1999, month = 6)
+  expect_no_error(extract_climate_values("grid", df1, time = "monthly"))
+
+  df2 <- data.frame(gridRef = "J3480", year = 2023, month = 6)
+  expect_no_error(extract_climate_values("grid", df2, time = "monthly"))
 })
 
 # =============================================================================
-# EDGE CASES AND SPECIAL SCENARIOS
+# DATA TYPE TESTS
 # =============================================================================
 
-test_that("all extractions disabled returns basic structure", {
+test_that("output is a data frame", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = "J3480")
-  result <- extract_all_values("grid", df,
-                               soil = FALSE, landcover = FALSE, climate = FALSE)
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, time = "monthly")
 
   expect_true(is.data.frame(result))
-  expect_true("gridRef" %in% colnames(result))
-  expect_true("gridType" %in% colnames(result))
 })
 
-test_that("mixed Irish and British grids work", {
+test_that("extracted values are numeric", {
   skip_if_not(is_online())
 
-  df <- data.frame(gridRef = c("J3480", "NT1565"), year = 2020, month = 6)
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  result <- extract_climate_values("grid", df, climvar = "rain", time = "monthly")
 
-  expect_message(
-    result <- extract_all_values("grid", df, climate = TRUE, climtime = "monthly"),
-    "both Irish and British"
-  )
-
-  expect_equal(nrow(result), 2)
-  expect_equal(result$gridType[1], "Irish Grid")
-  expect_equal(result$gridType[2], "British National Grid")
+  expect_true(is.numeric(result$monthly_rain))
 })
 
-test_that("UK data shows large file warning", {
+# =============================================================================
+# DOWNLOAD AND CACHING TESTS
+# =============================================================================
+
+test_that("download messages are present", {
+  skip_if_not(is_online())
+
+  # Clear cache first
+  unlink(file.path(tempdir(), "ni_climate_2020.nc"))
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+
+  expect_message(
+    extract_climate_values("grid", df, time = "monthly"),
+    "Downloaded|Using cached"
+  )
+})
+
+test_that("caching works on second call", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+
+  # First call
+  extract_climate_values("grid", df, time = "monthly")
+
+  # Second call should use cache
+  expect_message(
+    extract_climate_values("grid", df, time = "monthly"),
+    "Using cached"
+  )
+})
+
+# =============================================================================
+# REGION-SPECIFIC TESTS
+# =============================================================================
+
+test_that("Irish grid uses NI rasters", {
+  skip_if_not(is_online())
+
+  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+
+  expect_message(
+    extract_climate_values("grid", df, time = "monthly"),
+    "ni_climate"
+  )
+})
+
+test_that("British grid shows UK warning", {
   skip_if_not(is_online())
 
   df <- data.frame(gridRef = "NT1565", year = 2020, month = 6)
 
   expect_message(
-    extract_all_values("grid", df, climate = TRUE, climtime = "monthly"),
-    "UK data.*large.*timeout"
+    extract_climate_values("grid", df, time = "monthly"),
+    "UK data.*large"
   )
 })
 
-# =============================================================================
-# COMPLETE WORKFLOW TESTS
-# =============================================================================
-
-test_that("complete workflow with all features works", {
+test_that("British grid uses UK rasters", {
   skip_if_not(is_online())
 
-  # Use only Irish grid to avoid UK download timeout
-  df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
+  df <- data.frame(gridRef = "NT1565", year = 2020, month = 6)
 
-  result <- extract_all_values("grid", df,
-                               soil = TRUE, soilprops = c("clay", "sand"),
-                               landcover = TRUE,
-                               climate = TRUE,
-                               climvar = c("rain", "tas"),
-                               climtime = c("monthly", "seasonal"))
-
-  expect_equal(nrow(result), 1)
-  # Soil with depths
-  expect_true(any(grepl("clay_D", colnames(result))))
-  expect_true(any(grepl("sand_D", colnames(result))))
-  # Landcover classes
-  landcover_cols <- c("blw", "cw", "ara", "urb")
-  expect_true(any(landcover_cols %in% colnames(result)))
-  # Climate
-  expect_true("monthly_rain" %in% colnames(result))
-  expect_true("monthly_tas" %in% colnames(result))
-  expect_true(any(grepl("(winter|spring|summer|autumn)_", colnames(result))))
+  expect_message(
+    extract_climate_values("grid", df, time = "monthly"),
+    "uk_climate"
+  )
 })

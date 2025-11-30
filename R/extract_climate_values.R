@@ -7,6 +7,7 @@
 #' @import terra
 #' @import igr
 #' @import rnrfa
+#' @importFrom utils download.file
 #' @param type Either 'grid' if using grid references or 'coords' if using co-ordinates.
 #' @param df a data frame that must contain a 'year' and 'month' column. \cr
 #' If type = ‘grid,’ df must contain a column of grid references 'gridRef'. If type = ‘coords’,  df must contain columns for coordinates 'X' and 'Y'. \cr
@@ -406,7 +407,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
           message("Downloaded: ", fileNameNI)
         }, error = function(e) {
           warning("Failed to download: ", fileNameNI, " — ", e$message)
-          next
+
         })
       } else {
         message("Using cached version: ", fileNameNI)
@@ -423,13 +424,13 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
           message("Redownloaded: ", fileNameNI)
         }, error = function(e) {
           warning("Redownload failed: ", fileNameNI, " — ", e$message)
-          next
+
         })
 
         r <- suppressWarnings(try(rast(tempNI), silent = TRUE))
         if (inherits(r, "try-error") || nlyr(r) == 0) {
           warning("Still invalid after redownload: ", fileNameNI)
-          next
+
         }
       }
 
@@ -447,7 +448,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
           message("Downloaded: ", fileNameUK)
         }, error = function(e) {
           warning("Failed to download: ", fileNameUK, " — ", e$message)
-          next
+
         })
       } else {
         message("Using cached version: ", fileNameUK)
@@ -464,13 +465,13 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
           message("Redownloaded: ", fileNameUK)
         }, error = function(e) {
           warning("Redownload failed: ", fileNameUK, " — ", e$message)
-          next
+
         })
 
         r <- suppressWarnings(try(rast(tempUK), silent = TRUE))
         if (inherits(r, "try-error") || nlyr(r) == 0) {
           warning("Still invalid after redownload: ", fileNameUK)
-          next
+
         }
       }
 

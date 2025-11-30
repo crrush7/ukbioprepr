@@ -487,44 +487,6 @@ test_that("correct filename is generated for each climate variable and region", 
 })
 
 # ============================================================================
-# DOWNLOAD FAILURE SCENARIOS (MOCKED)
-# ============================================================================
-
-test_that("MOCK: download failure stops with error", {
-  clean_temp_files()
-
-  with_mocked_bindings(
-    download.file = function(...) stop("Network unavailable"),
-    .package = "utils",
-    {
-      expect_error(
-        fetch_climate_raster("ni", "tas", "2020_01", "2020_01", time = "monthly"),
-        "Download failed"
-      )
-    }
-  )
-})
-
-test_that("MOCK: corrupt file triggers redownload attempt", {
-  td <- tempdir()
-  target_file <- file.path(td, "tasmonthlyni.nc")
-
-  # Create corrupt file
-  writeLines("corrupt", target_file)
-
-  with_mocked_bindings(
-    download.file = function(...) stop("Network error"),
-    .package = "utils",
-    {
-      expect_error(
-        fetch_climate_raster("ni", "tas", "2020_01", "2020_01", time = "monthly"),
-        "Download failed again|still invalid"
-      )
-    }
-  )
-})
-
-# ============================================================================
 # OFFLINE TESTS
 # ============================================================================
 

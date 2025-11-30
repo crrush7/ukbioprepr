@@ -7,9 +7,10 @@
 #' The output is a list of rasters, with a raster for each property, with layers corresponding to all available depths at 1km resolution. \cr
 #' Users may want to consider increasing time out time to allow all relevant data to be downloaded: options(timeout = x). Data products are downloaded to a temporary directory once during each session and are removed when the session ends. \cr
 #' @import terra
+#' @importFrom utils download.file
 # Arguments:
 #' @param   reg   - Either 'uk' for all of UK in EPSG:27700 British National Grid or 'ni' for Northern Ireland in EPSG:29902 Irish Grid
-#' Character vector of all soil properties a user wishes to extract values for. The default is all properties. \cr
+#' @param   prop  - Character vector of all soil properties a user wishes to extract values for. The default is all properties. \cr
 #' Properties can be the following:\cr
 #' "ocd", organic carbon density kg m-3 \cr
 #' "bdod", bulk dens of fine earth fraction kg dm-3 \cr
@@ -127,7 +128,7 @@ fetch_soil_raster <- function(reg, prop = NULL) {
 
       if (inherits(r, "try-error") || nlyr(r) == 0) {
         warning("Redownloaded file still invalid: ", fileName)
-        next
+
       }
     }
 
