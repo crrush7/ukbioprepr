@@ -717,7 +717,7 @@ extract_all_values <- function(type,
     #Annual Only
     if ("annual" %in% climtime && !("seasonal" %in% climtime)) {
       startmonth <- annualstartmonth
-      endmonth <- ifelse(annualstartmonth == 12, 1, annualstartmonth - 1)
+      endmonth <- ifelse(annualstartmonth == 1, 12, annualstartmonth - 1)
       #If the annual period spans two calendar years, adjust endyear
       if(minMonth < startmonth){
         startyear <- startyear - 1}
@@ -848,8 +848,7 @@ extract_all_values <- function(type,
           }
         }
 
-        matching <- names(r)[names(r) %in% lnames]
-        rastList[[paste0("ni_", y)]] <- r[[matching]]
+        rastList[[paste0("ni_", y)]] <- r
       }
 
       if (dlUK) {
@@ -890,8 +889,7 @@ extract_all_values <- function(type,
           }
         }
 
-        matching <- names(r)[names(r) %in% lnames]
-        rastList[[paste0("uk_", y)]] <- r[[matching]]
+        rastList[[paste0("uk_", y)]] <- r
       }
     }
     annualseasonList <- list()
@@ -982,10 +980,11 @@ extract_all_values <- function(type,
         for (y in customYears) {
           yearStart <- paste0(y, "_", sprintf("%02d", as.numeric(startmonth)))
           if (startmonth == 1) {
-            yearEnd <- paste0(y, "12")  # No underscore, two-digit month
+            yearEnd <- paste0(y, "_12")
             annName <- paste0(envVar,
                               "_",
                               y,
+                              "_",              # ADD UNDERSCORE HERE TOO!
                               sprintf("%02d", startmonth),
                               "_",
                               yearEnd)
@@ -1023,7 +1022,7 @@ extract_all_values <- function(type,
         rowRef <- resultDf$gridRef[i]
         #skip if NA values
         if (anyNA(c(rowYear, rowMonth, rowRef))) next
-        rowym <- paste(rowYear, "_", rowMonth)
+        rowym <- paste0(rowYear, "_", rowMonth)
         #Determine if uk or ni
         if (resultDf$gridType[i] == 'Irish Grid' &&
             !is.na(resultDf$gridType[i])) {
@@ -1046,11 +1045,10 @@ extract_all_values <- function(type,
           layerNames <- names(raster)
           #find correct layer
           for (layer in layerNames) {
-            #extract start and end from raster name
             timerange <- sub(paste0("^", cv, "_"), "", layer)
             parts <- unlist(strsplit(timerange, "_"))
-            startym <- parts[1]
-            endym <- parts[2]
+            startym <- paste0(parts[1], parts[2])  # Combine year + month
+            endym <- paste0(parts[3], parts[4])
             rowym_num <- as.numeric(paste0(rowYear, sprintf("%02d", as.numeric(rowMonth))))  #Convert row to YYYYMM
             if (rowym_num >= startym & rowym_num <= endym) {
               matchingLayer <- layer

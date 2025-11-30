@@ -137,8 +137,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
   startyear <- minYear
   startmonth <- minMonth
   endyear <- maxYear
-  endmonth <- maxMonth
-
+  endmonth <- ifelse(annualstartmonth == 1, 12, annualstartmonth - 1)
   #Seasonal Only
   if ("seasonal" %in% time && !("annual" %in% time)) {
     #Adjust for full seasons based on input data
@@ -173,13 +172,16 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
   #Annual Only
   if ("annual" %in% time && !("seasonal" %in% time)) {
     startmonth <- annualstartmonth
-    endmonth <- ifelse(annualstartmonth == 12, 1, annualstartmonth - 1)
-    #If the annual period spans two calendar years, adjust endyear
+    endmonth <- ifelse(annualstartmonth == 1, 12, annualstartmonth - 1)
+
     if(minMonth < startmonth){
-    startyear <- startyear - 1}
-    if(maxMonth > endmonth)
-    endyear <- endyear + 1
+      startyear <- startyear - 1
     }
+
+    if(maxMonth > endmonth) {
+      endyear <- endyear + 1
+    }
+  }
   #Annual and seasonal
   if ('annual' %in% time && 'seasonal' %in% time){
     #adjust for full seasons based on data
@@ -390,7 +392,6 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
 
   #Initialise list
   rastList <- list()
-
   #Download and load rasters
   for (y in inputYears) {
 
@@ -432,9 +433,8 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
         }
       }
 
-      matching <- names(r)[names(r) %in% lnames]
-      rastList[[paste0("ni_", y)]] <- r[[matching]]
-    }
+      rastList[[paste0("ni_", y)]] <- r
+      }
 
     if (dlUK) {
       fileNameUK <- paste0("uk_climate_", y, ".nc")
@@ -474,8 +474,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
         }
       }
 
-      matching <- names(r)[names(r) %in% lnames]
-      rastList[[paste0("uk_", y)]] <- r[[matching]]
+      rastList[[paste0("uk_", y)]] <- r
     }
   }
 
@@ -566,34 +565,26 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
         mean
       )
       for (y in customYears) {
+
         yearStart <- paste0(y, "_", sprintf("%02d", as.numeric(startmonth)))
         if (startmonth == 1) {
-          yearEnd <- paste0(y, "12")  # No underscore, two-digit month
-          annName <- paste0(envVar,
-                            "_",
-                            y,
-                            sprintf("%02d", startmonth),
-                            "_",
-                            yearEnd)
+          yearEnd <- paste0(y, "_12")
+          annName <- paste0(envVar, "_", y, "_", sprintf("%02d", startmonth), "_", yearEnd)
         } else {
-          yearEnd <- paste0(y + 1, sprintf("%02d", as.numeric(startmonth) - 1))
-          annName <- paste0(envVar,
-                            "_",
-                            y,
-                            sprintf("%02d", as.numeric(startmonth)),
-                            "_",
-                            yearEnd)
+          yearEnd <- paste0(y + 1, "_", sprintf("%02d", as.numeric(startmonth) - 1))
+          annName <- paste0(envVar, "_", y, "_", sprintf("%02d", as.numeric(startmonth)), "_", yearEnd)
         }
-        annualLayers <- which(layerNames >= yearStart &
-                                layerNames <= yearEnd)
-        #warnings for incomplete years
+        annualLayers <- which(layerNames >= yearStart & layerNames <= yearEnd)
+
         if (length(annualLayers) < 12) {
+          print("Skipping - less than 12 layers")
           next
         }
         annualRast <- app(x[[annualLayers]], aggFunct, na.rm = TRUE)
         names(annualRast) <- annName
         annualRasts <- c(annualRasts, annualRast)
       }
+
       if (length(annualRasts) == 0) {
         stop('No complete annual data availble for selected date range.')
       }
@@ -610,7 +601,7 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
       rowRef <- resultDf$gridRef[i]
       #skip if NA values
       if (anyNA(c(rowYear, rowMonth, rowRef))) next
-      rowym <- paste(rowYear, "_", rowMonth)
+      rowym <- paste0(rowYear, "_", rowMonth)
       #Determine if uk or ni
       if (resultDf$gridType[i] == 'Irish Grid' &&
           !is.na(resultDf$gridType[i])) {
@@ -636,9 +627,10 @@ if (!all(as.numeric(df$month) %in% 1:12)) {
           #extract start and end from raster name
           timerange <- sub(paste0("^", cv, "_"), "", layer)
           parts <- unlist(strsplit(timerange, "_"))
-          startym <- parts[1]
-          endym <- parts[2]
-          rowym_num <- as.numeric(paste0(rowYear, sprintf("%02d", as.numeric(rowMonth))))  #Convert row to YYYYMM
+          startym <- paste0(parts[1], parts[2])
+          endym <- paste0(parts[3], parts[4])
+          rowym_num <- as.numeric(paste0(rowYear, sprintf("%02d", as.numeric(rowMonth))))
+
           if (rowym_num >= startym & rowym_num <= endym) {
             matchingLayer <- layer
             break

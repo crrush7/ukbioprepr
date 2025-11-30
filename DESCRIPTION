@@ -14,3 +14,6 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
 Imports: terra, rnrfa, igr
+Suggests: 
+    testthat (>= 3.0.0), covr
+Config/testthat/edition: 3
