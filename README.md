@@ -256,8 +256,6 @@ For detailed documentation on any function:
 
 - **Test Coverage:** 86.87% with 584+ comprehensive tests
 - **Documentation:** Complete roxygen2 documentation for all functions
-- **R CMD Check:** Passes all CRAN checks
-- **CI/CD:** Automated testing across multiple R versions and platforms
 
 ------------------------------------------------------------------------
 
