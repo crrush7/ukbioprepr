@@ -1,4 +1,4 @@
-ackage: ukbioprepr
+Package: ukbioprepr
 Type: Package
 Title: Preparing Environmental Data for Biodiveristy Modelling in the UK
 Version: 0.1.0
@@ -13,7 +13,7 @@ Description: ukbioprepr provides functions for downloading raster files and extr
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Imports: terra, rnrfa, igr
 Suggests: 
     testthat (>= 3.0.0), covr
