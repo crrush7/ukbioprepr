@@ -30,11 +30,7 @@ jobs:
 
       - name: Test coverage
         run: |
-          cov <- covr::package_coverage(
-            quiet = FALSE,
-            clean = FALSE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
-          )
+          cov <- covr::package_coverage()
           covr::to_cobertura(cov, filename = "cobertura.xml")
         shell: Rscript {0}
 
@@ -54,7 +50,7 @@ jobs:
         shell: bash
 
       - name: Upload test results
-        if: always()
+        if: fail()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
