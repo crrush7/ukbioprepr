@@ -11,20 +11,20 @@ First public release of `ukbioprepr` - an R package to support reproducible prep
 
 ### Key Features
 
-* **Dual input mode**: Works with both grid references (Irish/British National Grid) and coordinates (any CRS)
-* **Coordinate system handling**: Automatic CRS detection and reprojection
+* **Dual input**: Works with both grid references (Irish/British National Grid) and coordinates (any CRS)
+* **Coordinate system handling**: Automatic CRS reprojection
 * **Smart caching**: Downloaded rasters cached locally to avoid redundant downloads
 * **Robust error handling**: Automatic retry logic for failed downloads
 * **Comprehensive validation**: Input checking for all parameters
 * **Flexible temporal aggregations**: Monthly, seasonal, and annual climate summaries
 * **High spatial resolution**: All data products at 1 km resolution
+* **Gridded data**: Rasters provided in line with chosen coordinate reference system
 
 ### Testing and Quality
 
 * Comprehensive test suite with **86.87% code coverage**
 * **584+ tests** covering all major functionality
 * Full roxygen2 documentation for all exported functions
-* Passes R CMD check
 * Automated testing via GitHub Actions
 
 ### Data Sources
@@ -35,7 +35,7 @@ First public release of `ukbioprepr` - an R package to support reproducible prep
 
 ### Known Limitations
 
-* UK climate files are large (~250MB) and may timeout on slow connections
+* UK climate files are large (~250MB - 1.45B) and may timeout on slow connections
 * Requires active internet connection for first-time raster downloads
 
 ---
