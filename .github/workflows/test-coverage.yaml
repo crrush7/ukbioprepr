@@ -30,22 +30,24 @@ jobs:
 
       - name: Test coverage
         run: |
-          cov <- covr::package_coverage()
-          covr::to_cobertura(cov, filename = "cobertura.xml")
+          cov <- covr::package_coverage(
+            quiet = FALSE,
+            clean = FALSE,
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+          )
+          print(cov)
+          covr::to_cobertura(cov)
         shell: Rscript {0}
 
       - uses: codecov/codecov-action@v4
         with:
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' && true || false }}
+          fail_ci_if_error: false
           file: ./cobertura.xml
-          plugin: noop
-          disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show testthat output
         if: always()
         run: |
-          ## --------------------------------------------------------------------
           find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
@@ -55,8 +57,3 @@ jobs:
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package
-
-      - name: Run coverage
-        run: |
-          Rscript -e "cov <- covr::package_coverage(type='tests'); print(cov)"
-          Rscript -e "covr::to_cobertura(cov, 'cobertura.xml')"
