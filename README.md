@@ -3,7 +3,6 @@
 # ukbioprepr
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/crrush7/ukbioprepr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/crrush7/ukbioprepr/actions/workflows/R-CMD-check.yaml)
 [![codecov](https://codecov.io/gh/crrush7/ukbioprepr/branch/main/graph/badge.svg)](https://codecov.io/gh/crrush7/ukbioprepr)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
