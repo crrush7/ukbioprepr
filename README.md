@@ -3,7 +3,7 @@
 # ukbioprepr
 
 <!-- badges: start -->
-[![codecov](https://codecov.io/github/crrush7/ukbioprepr/coverage.svg?branch=main)](https://codecov.io/github/crrush7/ukbioprepr?branch=main)
+[![codecov](https://codecov.io/github/crrush7/ukbioprepr/branch/main/graph/badge.svg?token=RMFJRR4YY2)](https://codecov.io/github/crrush7/ukbioprepr)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
