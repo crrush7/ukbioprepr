@@ -371,6 +371,11 @@ For detailed documentation on any function:
 
 ------------------------------------------------------------------------
 
+## Version History
+
+See [news.md](news.md) for version history and changes.
+------------------------------------------------------------------------
+
 ## Citation
 
 If you use `ukbioprepr` in your research, please cite:
