@@ -3,8 +3,8 @@
 # ukbioprepr
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/YOUR-USERNAME/ukbioprepr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/YOUR-USERNAME/ukbioprepr/actions/workflows/R-CMD-check.yaml)
-[![test-coverage](https://codecov.io/gh/YOUR-USERNAME/ukbioprepr/branch/main/graph/badge.svg)](https://app.codecov.io/gh/YOUR-USERNAME/ukbioprepr?branch=main)
+[![R-CMD-check](https://github.com/crrush7/ukbioprepr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/crrush7/ukbioprepr/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://codecov.io/gh/crrush7/ukbioprepr/branch/main/graph/badge.svg)](https://app.codecov.io/gh/crrush7/ukbioprepr?branch=main)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
@@ -20,7 +20,7 @@ Install the development version from GitHub:
 
 ```r
 # install.packages("remotes")
-remotes::install_github("YOUR-USERNAME/ukbioprepr")
+remotes::install_github("crrush7/ukbioprepr")
 ```
 
 Once installed, load the package:
@@ -289,7 +289,7 @@ Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING
 
 If you encounter any issues or have questions:
 
-- **Bug reports:** Please open an issue on our [GitHub Issues page](https://github.com/YOUR-USERNAME/ukbioprepr/issues) using the bug report template
+- **Bug reports:** Please open an issue on our [GitHub Issues page](https://github.com/crrush7/ukbioprepr/issues) using the bug report template
 - **Feature requests:** Use the feature request template in Issues
 - **Questions:** Open a discussion or contact the maintainer
 
@@ -323,4 +323,4 @@ We thank these organizations for making their data publicly available.
 
 Charlotte R. Rush - cr23569@essex.ac.uk
 
-Project Link: [https://github.com/YOUR-USERNAME/ukbioprepr](https://github.com/YOUR-USERNAME/ukbioprepr)
+Project Link: [https://github.com/crrush7/ukbioprepr](https://github.com/crrush7/ukbioprepr)
