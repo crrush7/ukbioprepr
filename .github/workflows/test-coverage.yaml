@@ -50,7 +50,7 @@ jobs:
         shell: bash
 
       - name: Upload test results
-        if: fail()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
