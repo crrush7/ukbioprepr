@@ -55,3 +55,11 @@ jobs:
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package
+
+      - name: Run coverage
+        run: |
+          Rscript -e "cov <- covr::package_coverage(type='tests'); print(cov)"
+          Rscript -e "covr::to_cobertura(cov, 'cobertura.xml', root='.')"
+
+      - name: Show cobertura.xml
+        run: cat cobertura.xml
