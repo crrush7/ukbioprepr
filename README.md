@@ -292,8 +292,8 @@ soilres <- extract_soil_values(
 
 ```r
 # Extract values for land cover using coordinates in British National Grid 
-X <- c('315000')
-Y <- c('665000')
+X <- c(315000)
+Y <- c(665000)
 lcdf <- as.data.frame(X)
 lcdf$Y <- Y
 lcdf$year <- 2020
@@ -314,8 +314,8 @@ X <- c(-3.3599286, -7.86877046557228, -6.74336745843602, -3.7908580004141)
 Y <- c(55.870643, 54.4262065989996, 54.6213752198463, 52.0828922843592)
 alldf <- as.data.frame(X)
 alldf$Y <- Y
-alldf$year <- c(2020, 2021, 2022, 2020, 2022, 2020, 2020, 2021)
-alldf$month <- c(4, 4, 5, 6, 1, 12, 11, 12)
+alldf$year <- c(2020, 2021, 2022, 2020)
+alldf$month <- c(4, 4, 5, 6)
 
 allres <- extract_all_values(
   type = 'coords',
