@@ -427,6 +427,7 @@ This package integrates data from several important sources:
 - **Land cover data:** [UK Centre for Ecology and Hydrology](https://www.ceh.ac.uk/data/ukceh-land-cover-maps)
 
 We thank these organisations for making their data publicly available.
+Please reference or acknowledge sources in publications.
 
 ------------------------------------------------------------------------
 
