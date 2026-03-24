@@ -29,6 +29,19 @@ library(ukbioprepr)
 ```
 
 ------------------------------------------------------------------------
+## Data Licensing
+
+Soil data (SoilGrids) is available under CC-BY 4.0.
+Climate data (HadUK-Grid) is available under the Open Government Licence.
+
+The land cover data products are derived from the UKCEH Land Cover Maps and are subject to UKCEH licence terms. 
+**Use of these data products is restricted to non-commercial applications only.**
+
+Users of land cover data must:
+- Acknowledge and cite original sources in any publications
+- Ensure any onward sharing of derived outputs complies with original license agreements
+
+------------------------------------------------------------------------
 
 ## Data Product Information
 
@@ -126,7 +139,9 @@ There are two sets of land cover data products: 2000-2023 and 2015-2023. The lat
 
 **Data Format:** Land cover data products are percentage cover
 
-**Data Source:** Derived from the [UK Centre for Ecology and Hydrology Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps)
+**Data Source:** Derived from the [UK Centre for Ecology and Hydrology (UKCEH) Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps). 
+These data products are subject to UKCEH licence terms and are available for **non-commercial use only**. Users must acknowledge UKCEH and the 
+original datasets in any publications or reports.
 
 ------------------------------------------------------------------------
 
@@ -414,20 +429,21 @@ When reporting bugs, please include:
 
 ## License
 
-GPL-3
+GPL-3 for the package
+Data products are under different llicenses as described above.
 
 ------------------------------------------------------------------------
 
 ## Acknowledgments
 
-This package integrates data from several important sources:
+This package integrates derived data products from several important sources:
 
-- **Soil data:** [SoilGrids](https://soilgrids.org)
-- **Climate data:** [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets)  
-- **Land cover data:** [UK Centre for Ecology and Hydrology](https://www.ceh.ac.uk/data/ukceh-land-cover-maps)
+- **Soil data:** [SoilGrids](https://soilgrids.org) — available under CC-BY 4.0
+- **Climate data:** [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets) — available under Open Government Licence
+- **Land cover data:** [UK Centre for Ecology and Hydrology (UKCEH) Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps) — available for non-commercial use under UKCEH licence terms
 
-We thank these organisations for making their data publicly available.
-Please reference or acknowledge sources in publications.
+We thank these organisations for making their data available.
+Users are required to cite original data sources in any publications. 
 
 ------------------------------------------------------------------------
 
