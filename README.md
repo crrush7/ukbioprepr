@@ -34,14 +34,16 @@ library(ukbioprepr)
 ------------------------------------------------------------------------
 ## Data Licensing
 
-Soil data (SoilGrids) is available under CC-BY 4.0.
+All derived data products are available under original licesning agreements:
 
-Climate data (HadUK-Grid) is available under the Open Government Licence.
+Soil data derived from SoilGrids is available under [CC-BY 4.0.](https://creativecommons.org/licenses/by/4.0/deed.en)
 
-The land cover data products are derived from the UKCEH Land Cover Maps and are subject to UKCEH licence terms. 
+Climate data products are derived from Met Office's HadUK-Grid and are available under [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+The land cover data products are derived from the UKCEH Land Cover Maps and are subject to UKCEH licence terms: [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
 **Use of these data products is restricted to non-commercial applications only.**
 
-Users of land cover data must:
+Users of data through ukbioprepr must:
+- Cite the package in any publications
 - Acknowledge and cite original sources in any publications
 - Ensure any onward sharing of derived outputs complies with original license agreements
 
