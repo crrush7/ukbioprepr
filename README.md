@@ -394,11 +394,13 @@ See [news.md](news.md) for version history and changes.
 
 ## Citation
 
+
 If you use `ukbioprepr` in your research, please cite:
 
-```r
-citation("ukbioprepr")
-```
+Rush, C. R., Cooper, J., Larrosa, C. and Wilkes, M. 2026. 'ukbioprepr': an R package to support reproducible preparation of environmental data 
+for biodiversity modelling in the UK. Ecography 2026: e08413. https://doi.org/10.1002/ecog.08413
+
+Please also cite original data providers.
 
 
 ------------------------------------------------------------------------
