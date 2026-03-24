@@ -1,3 +1,14 @@
+# Updates
+
+## Land Cover Data
+
+Land Cover data is currently unavailable. Please wait for updates. 
+
+## Licensing 
+
+This package and associated repositories operate under a non-commerical license. For commerical use, please get in touch.
+
+
 # ukbioprepr 0.1.0
 
 ## Initial Release
