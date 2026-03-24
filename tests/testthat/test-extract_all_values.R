@@ -10,6 +10,14 @@ is_online <- function() {
   !inherits(res, "try-error")
 }
 
+# Skip all landcover tests if data unavailable
+lc_available <- tryCatch(
+  suppressWarnings(landcover_available()),
+  error = function(e) FALSE,
+  warning = function(w) FALSE
+)
+cat("lc_available is:", lc_available, "\n")
+
 # =============================================================================
 # INPUT VALIDATION TESTS - BASIC
 # =============================================================================
@@ -301,7 +309,10 @@ test_that("other CRS coordinates are reprojected with message", {
   skip_if_not(is_online())
 
   df <- data.frame(X = -6.0, Y = 54.5)
-
+  skip_if_not(
+    tryCatch({terra::crs("EPSG:4326"); TRUE}, error = function(e) FALSE),
+    "PROJ database not available"
+  )
   expect_message(
     result <- extract_all_values("coords", df, crs = "EPSG:4326",
                                  soil = TRUE, landcover = FALSE, climate = FALSE),
@@ -330,8 +341,8 @@ test_that("soil-only extraction works", {
 })
 
 test_that("landcover-only extraction works", {
-  skip_if_not(is_online())
-
+  #skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
   df <- data.frame(gridRef = "J3480", year = 2020)
   result <- extract_all_values("grid", df,
                                soil = FALSE, landcover = TRUE, climate = FALSE)
@@ -359,8 +370,8 @@ test_that("climate-only extraction works", {
 # =============================================================================
 
 test_that("soil + landcover extraction works", {
-  skip_if_not(is_online())
-
+  #skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
   df <- data.frame(gridRef = "J3480", year = 2020)
   result <- extract_all_values("grid", df,
                                soil = TRUE, soilprops = "clay",
@@ -386,7 +397,8 @@ test_that("soil + climate extraction works", {
 })
 
 test_that("landcover + climate extraction works", {
-  skip_if_not(is_online())
+  #skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
   result <- extract_all_values("grid", df,
@@ -399,7 +411,7 @@ test_that("landcover + climate extraction works", {
 })
 
 test_that("all three extractions work together", {
-  skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
   result <- extract_all_values("grid", df,
@@ -420,7 +432,7 @@ test_that("output has correct structure for grid type", {
   skip_if_not(is_online())
 
   df <- data.frame(gridRef = "J3480", year = 2020, month = 6)
-  result <- extract_all_values("grid", df, climate = TRUE, climtime = "monthly")
+  result <- extract_all_values("grid", df, landcover = FALSE, climate = TRUE, climtime = "monthly")
 
   expect_true(is.data.frame(result))
   expect_true("gridRef" %in% colnames(result))
@@ -433,7 +445,7 @@ test_that("output has correct structure for coords type", {
   skip_if_not(is_online())
 
   df <- data.frame(X = 334000, Y = 380000, year = 2020, month = 6)
-  result <- extract_all_values("coords", df, crs = "EPSG:29903",
+  result <- extract_all_values("coords", df, crs = "EPSG:29903", landcover = FALSE,
                                climate = TRUE, climtime = "monthly")
 
   expect_true(is.data.frame(result))
@@ -572,7 +584,8 @@ test_that("soil extracts only specified properties", {
 # =============================================================================
 
 test_that("landcover extracts for different years", {
-  skip_if_not(is_online())
+  #skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = c("J3480", "J3480"), year = c(2015, 2020))
   result <- extract_all_values("grid", df, soil = FALSE, landcover = TRUE, climate = FALSE)
@@ -582,8 +595,8 @@ test_that("landcover extracts for different years", {
 })
 
 test_that("landcover shows message for years < 2015", {
-  skip_if_not(is_online())
-
+  #skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
   df <- data.frame(gridRef = "J3480", year = 2010)
 
   expect_message(
@@ -614,7 +627,7 @@ test_that("mixed Irish and British grids work", {
   df <- data.frame(gridRef = c("J3480", "NT1565"), year = 2020, month = 6)
 
   expect_message(
-    result <- extract_all_values("grid", df, climate = TRUE, climtime = "monthly"),
+    result <- extract_all_values("grid", df, climate = TRUE, landcover = FALSE, climtime = "monthly"),
     "both Irish and British"
   )
 
@@ -629,7 +642,7 @@ test_that("UK data shows large file warning", {
   df <- data.frame(gridRef = "NT1565", year = 2020, month = 6)
 
   expect_message(
-    extract_all_values("grid", df, climate = TRUE, climtime = "monthly"),
+    extract_all_values("grid", df, climate = TRUE, landcover = FALSE, climtime = "monthly"),
     "UK data.*large.*timeout"
   )
 })
@@ -639,7 +652,7 @@ test_that("UK data shows large file warning", {
 # =============================================================================
 
 test_that("complete workflow with all features works", {
-  skip_if_not(is_online())
+  skip_if_not(lc_available, "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = c("J3480", "NT1565"), year = 2020, month = 6)
 

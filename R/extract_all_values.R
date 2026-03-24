@@ -560,6 +560,24 @@ extract_all_values <- function(type,
   }
   #land cover
   if (landcover) {
+    # Check if land cover data is currently available
+    lc_check <- try(
+      download.file(
+        "https://zenodo.org/records/14849882/files/2020ni.tif",
+        tempfile(), quiet = TRUE, mode = "wb"
+      ),
+      silent = TRUE
+    )
+    if (inherits(lc_check, "try-error") || !identical(lc_check, 0L)) {
+      message(
+        "Land cover data is temporarily unavailable. ",
+        "The data repository is currently being updated. ",
+        "Please check https://github.com/crrush7/ukbioprepr for updates. ",
+        "Land cover extraction has been skipped. ",
+        "Climate and soil extractions are unaffected."
+      )
+      landcover <- FALSE
+    }
     #list years from df
     yearstot <- sort(unique(resultDf$year))
     #Download data from Zenodo

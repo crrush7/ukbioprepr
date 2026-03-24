@@ -3,11 +3,20 @@ library(testthat)
 library(terra)
 
 # Helper to detect offline
-is_online <- function() {
-  res <- try(utils::download.file("https://zenodo.org/robots.txt",
-                                  tempfile(), quiet = TRUE, mode = "wb"),
-             silent = TRUE)
-  !inherits(res, "try-error")
+#is_online <- function() {
+ # res <- try(utils::download.file("https://zenodo.org/robots.txt",
+  #                                tempfile(), quiet = TRUE, mode = "wb"),
+  #           silent = TRUE)
+ # !inherits(res, "try-error")
+#}
+
+# Helper function to clean temp directory
+clean_temp_files <- function(pattern = "*.tif") {
+  td <- tempdir()
+  files <- list.files(td, pattern = pattern, full.names = TRUE)
+  if (length(files) > 0) {
+    file.remove(files)
+  }
 }
 
 # ============================================================================
@@ -69,7 +78,7 @@ test_that("grid type requires year column", {
 })
 
 test_that("grid type works with both required columns", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   expect_no_error({
@@ -122,7 +131,7 @@ test_that("coords type requires crs to start with EPSG:", {
 })
 
 test_that("coords type works with all required parameters", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(X = 326000, Y = 370000, year = 2020)
   expect_no_error({
@@ -156,16 +165,18 @@ test_that("year must be between 2000 and 2023", {
   )
 })
 
-test_that("year boundary values work correctly", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+test_that("year boundary values work correctly (2000)", {
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
-  # Test 2000
   df1 <- data.frame(gridRef = "J326706", year = 2000)
   expect_no_error({
     result <- extract_landcover_values("grid", df1)
   })
+})
 
-  # Test 2023
+test_that("year boundary values work correctly (2023)", {
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
+
   df2 <- data.frame(gridRef = "J326706", year = 2023)
   expect_no_error({
     result <- extract_landcover_values("grid", df2)
@@ -197,7 +208,7 @@ test_that("function stops on NA in year", {
 # ============================================================================
 
 test_that("Irish grid references are detected correctly", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   result <- extract_landcover_values("grid", df)
@@ -206,7 +217,7 @@ test_that("Irish grid references are detected correctly", {
 })
 
 test_that("British grid references are detected correctly", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "NT270700", year = 2020)
   result <- extract_landcover_values("grid", df)
@@ -215,7 +226,7 @@ test_that("British grid references are detected correctly", {
 })
 
 test_that("mixed Irish and British grid references produce message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(
     gridRef = c("J326706", "NT270700"),
@@ -229,7 +240,7 @@ test_that("mixed Irish and British grid references produce message", {
 })
 
 test_that("invalid grid references produce warning and NA values", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = c("INVALID", "J326706"), year = c(2020, 2020))
 
@@ -247,7 +258,7 @@ test_that("invalid grid references produce warning and NA values", {
 # ============================================================================
 
 test_that("Irish Grid coords retain original CRS", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(X = 326000, Y = 370000, year = 2020)
   result <- extract_landcover_values("coords", df, crs = "EPSG:29903")
@@ -258,7 +269,7 @@ test_that("Irish Grid coords retain original CRS", {
 })
 
 test_that("British National Grid coords retain original CRS", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(X = 327000, Y = 670000, year = 2020)
   result <- extract_landcover_values("coords", df, crs = "EPSG:27700")
@@ -269,7 +280,7 @@ test_that("British National Grid coords retain original CRS", {
 })
 
 test_that("other CRS coordinates are reprojected with message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(X = -6.0, Y = 54.5, year = 2020)
 
@@ -288,7 +299,7 @@ test_that("other CRS coordinates are reprojected with message", {
 # ============================================================================
 
 test_that("years before 2015 trigger aggregation message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2014)
 
@@ -299,7 +310,7 @@ test_that("years before 2015 trigger aggregation message", {
 })
 
 test_that("years from 2015 onwards do not trigger aggregation message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2015)
 
@@ -311,7 +322,7 @@ test_that("years from 2015 onwards do not trigger aggregation message", {
 })
 
 test_that("mixed years spanning 2015 trigger aggregation message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(
     gridRef = c("J326706", "J326706"),
@@ -329,7 +340,7 @@ test_that("mixed years spanning 2015 trigger aggregation message", {
 # ============================================================================
 
 test_that("grid type output contains correct columns", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   result <- extract_landcover_values("grid", df)
@@ -342,7 +353,7 @@ test_that("grid type output contains correct columns", {
 })
 
 test_that("grid type output has land cover columns", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   result <- extract_landcover_values("grid", df)
@@ -355,7 +366,7 @@ test_that("grid type output has land cover columns", {
 })
 
 test_that("grid type output has one row per input row", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(
     gridRef = c("J326706", "J327707", "J328708"),
@@ -371,7 +382,7 @@ test_that("grid type output has one row per input row", {
 # ============================================================================
 
 test_that("coords type output contains correct columns", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(X = 326000, Y = 370000, year = 2020)
   result <- extract_landcover_values("coords", df, crs = "EPSG:29903")
@@ -385,7 +396,7 @@ test_that("coords type output contains correct columns", {
 })
 
 test_that("coords type output has land cover columns", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(X = 326000, Y = 370000, year = 2020)
   result <- extract_landcover_values("coords", df, crs = "EPSG:29903")
@@ -398,7 +409,7 @@ test_that("coords type output has land cover columns", {
 })
 
 test_that("coords type output has one row per input row", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(
     X = c(326000, 327000, 328000),
@@ -415,7 +426,7 @@ test_that("coords type output has one row per input row", {
 # ============================================================================
 
 test_that("2015+ years return detailed land cover classes", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   result <- extract_landcover_values("grid", df)
@@ -428,7 +439,7 @@ test_that("2015+ years return detailed land cover classes", {
 })
 
 test_that("pre-2015 years return aggregated land cover classes", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2010)
   result <- extract_landcover_values("grid", df)
@@ -442,7 +453,7 @@ test_that("pre-2015 years return aggregated land cover classes", {
 # ============================================================================
 
 test_that("multiple years extract correctly", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(
     gridRef = c("J326706", "J326706"),
@@ -459,7 +470,7 @@ test_that("multiple years extract correctly", {
 # ============================================================================
 
 test_that("raster downloads show download message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   # Clear a specific file to force download
   temp_file <- file.path(tempdir(), "2022ni.tif")
@@ -475,7 +486,7 @@ test_that("raster downloads show download message", {
 })
 
 test_that("cached rasters show cache message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
 
@@ -495,7 +506,7 @@ test_that("cached rasters show cache message", {
 # ============================================================================
 
 test_that("single row data frame works", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   expect_no_error({
@@ -505,7 +516,7 @@ test_that("single row data frame works", {
 })
 
 test_that("data frame with many rows works", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(
     gridRef = rep("J326706", 10),
@@ -518,7 +529,7 @@ test_that("data frame with many rows works", {
 })
 
 test_that("extraction message is shown", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
 
@@ -533,7 +544,7 @@ test_that("extraction message is shown", {
 # ============================================================================
 
 test_that("output is a data frame", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   result <- extract_landcover_values("grid", df)
@@ -542,7 +553,7 @@ test_that("output is a data frame", {
 })
 
 test_that("extracted land cover values are numeric", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   df <- data.frame(gridRef = "J326706", year = 2020)
   result <- extract_landcover_values("grid", df)

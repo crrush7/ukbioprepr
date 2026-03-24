@@ -208,6 +208,24 @@ extract_landcover_values <- function(type, df, crs = NULL) {
     }
   }
 
+  # Check if land cover data is currently available
+  lc_check <- try(
+    download.file(
+      "https://zenodo.org/records/14849882/files/2020ni.tif",
+      tempfile(), quiet = TRUE, mode = "wb"
+    ),
+    silent = TRUE
+  )
+  if (inherits(lc_check, "try-error") || !identical(lc_check, 0L)) {
+    stop(
+      "Land cover data is temporarily unavailable. ",
+      "The data repository is currently being updated. ",
+      "Please check https://github.com/crrush7/ukbioprepr for updates. ",
+      "Climate and soil functions are unaffected.",
+      call. = FALSE
+    )
+  }
+
   #Download data from Zenodo
   baseUrl <- "https://zenodo.org/records/14849882/files/"
 

@@ -13,12 +13,12 @@ clean_temp_files <- function(pattern = "*.tif") {
 }
 
 # Helper to detect offline
-is_online <- function() {
-  res <- try(utils::download.file("https://zenodo.org/robots.txt",
-                                  tempfile(), quiet = TRUE, mode = "wb"),
-             silent = TRUE)
-  !inherits(res, "try-error")
-}
+#is_online <- function() {
+ # res <- try(utils::download.file("https://zenodo.org/robots.txt",
+  #                                tempfile(), quiet = TRUE, mode = "wb"),
+   #          silent = TRUE)
+  #!inherits(res, "try-error")
+#}
 
 # ============================================================================
 # INPUT VALIDATION TESTS - REGION
@@ -85,7 +85,7 @@ test_that("fetch_landcover_raster stops if startyear > endyear", {
 })
 
 test_that("fetch_landcover_raster accepts equal start and end years", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2020*.tif")
 
   expect_no_error({
@@ -105,7 +105,7 @@ test_that("fetch_landcover_raster stops if both years out of range", {
 # ============================================================================
 
 test_that("years before 2015 trigger aggregation message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("*agg.tif")
 
   expect_message(
@@ -115,7 +115,7 @@ test_that("years before 2015 trigger aggregation message", {
 })
 
 test_that("years from 2015 onwards do not trigger aggregation message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2020*.tif")
 
   # Should not get the aggregation message
@@ -126,7 +126,7 @@ test_that("years from 2015 onwards do not trigger aggregation message", {
 })
 
 test_that("mixed years (before and after 2015) trigger aggregation message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files()
 
   expect_message(
@@ -140,7 +140,7 @@ test_that("mixed years (before and after 2015) trigger aggregation message", {
 # ============================================================================
 
 test_that("fresh download: single year returns SpatRaster", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2021*.tif")
 
   res <- fetch_landcover_raster("uk", 2021, 2021)
@@ -148,7 +148,7 @@ test_that("fresh download: single year returns SpatRaster", {
 })
 
 test_that("fresh download: multiple years return named list", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2020*.tif")
   clean_temp_files("2021*.tif")
 
@@ -161,7 +161,7 @@ test_that("fresh download: multiple years return named list", {
 })
 
 test_that("fresh download: aggregated files use correct naming", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("*niagg.tif")
 
   res <- fetch_landcover_raster("ni", 2010, 2010)
@@ -172,7 +172,7 @@ test_that("fresh download: aggregated files use correct naming", {
 })
 
 test_that("fresh download: non-aggregated files use correct naming", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2020ni.tif")
 
   res <- fetch_landcover_raster("ni", 2020, 2020)
@@ -183,7 +183,7 @@ test_that("fresh download: non-aggregated files use correct naming", {
 })
 
 test_that("cached file uses cache and shows message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   # First call downloads
   res1 <- fetch_landcover_raster("uk", 2022, 2022)
@@ -197,7 +197,7 @@ test_that("cached file uses cache and shows message", {
 })
 
 test_that("successful download produces download message", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2019uk.tif")
 
   expect_message(
@@ -207,7 +207,7 @@ test_that("successful download produces download message", {
 })
 
 test_that("corrupt cached file triggers re-download", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
 
   td <- tempdir()
   target_file <- file.path(td, "2018uk.tif")
@@ -227,7 +227,7 @@ test_that("corrupt cached file triggers re-download", {
 # ============================================================================
 
 test_that("single year returns SpatRaster not list", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2017*.tif")
 
   res <- fetch_landcover_raster("uk", 2017, 2017)
@@ -236,7 +236,7 @@ test_that("single year returns SpatRaster not list", {
 })
 
 test_that("two years return named list", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2016*.tif")
   clean_temp_files("2017*.tif")
 
@@ -247,7 +247,7 @@ test_that("two years return named list", {
 })
 
 test_that("multiple years return list with correct year names", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2020*.tif")
   clean_temp_files("2021*.tif")
   clean_temp_files("2022*.tif")
@@ -259,7 +259,7 @@ test_that("multiple years return list with correct year names", {
 })
 
 test_that("list elements are all SpatRaster objects", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2019*.tif")
   clean_temp_files("2020*.tif")
   clean_temp_files("2021*.tif")
@@ -273,7 +273,7 @@ test_that("list elements are all SpatRaster objects", {
 # ============================================================================
 
 test_that("northern ireland region produces correct filenames", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2015ni.tif")
 
   res <- fetch_landcover_raster("ni", 2015, 2015)
@@ -282,7 +282,7 @@ test_that("northern ireland region produces correct filenames", {
 })
 
 test_that("uk region produces correct filenames", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2015uk.tif")
 
   res <- fetch_landcover_raster("uk", 2015, 2015)
@@ -295,7 +295,7 @@ test_that("uk region produces correct filenames", {
 # ============================================================================
 
 test_that("boundary years work correctly (2000)", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2000*.tif")
 
   expect_no_error({
@@ -305,7 +305,7 @@ test_that("boundary years work correctly (2000)", {
 })
 
 test_that("boundary years work correctly (2023)", {
-  skip_if_not(is_online(), "No internet - skipping integration test")
+  skip_if_not(landcover_available(), "Land cover data temporarily unavailable")
   clean_temp_files("2023*.tif")
 
   expect_no_error({
