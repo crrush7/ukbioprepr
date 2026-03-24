@@ -75,7 +75,7 @@ Available time periods:
 **Data Source:** Climate variable data products are derived from the [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets)
 
 ### Land Cover
-
+### *Currently unavailable - updates coming
 There are two sets of land cover data products: 2000-2023 and 2015-2023. The latter contain more detailed classes whilst the former has some aggregated classes due to changes in classification in original data sources. Land cover codes correspond to names of cover classes in either raster layers or outputted data frames.
 
 #### 2015-2023 Land Cover Classes
