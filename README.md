@@ -11,6 +11,9 @@
 
 `ukbioprepr` is an R package designed to streamline the process of preparing environmental predictor variables for biodiversity modelling. It supports extractions using grid references and coordinates across the UK and Northern Ireland, and provides easy access to curated data products covering soil properties, land cover and climate variables. Both land cover and climate data are available from the years 2000 to 2023. Data products can be downloaded in raster format at a 1 km resolution for the entirety of the UK in British National Grid (EPSG:27700) or for Northern Ireland alone in Irish Grid (EPSG:29903).
 
+**Note:** Land cover data products are temporarily unavailable pending updates to the data repository. 
+Climate and soil functions are unaffected.
+
 ------------------------------------------------------------------------
 
 ## Installation
