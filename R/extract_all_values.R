@@ -208,6 +208,7 @@ extract_all_values <- function(type,
   }
   #Land cover specific warnings
   if (landcover == TRUE) {
+    check_lc_consent()
     #check that year column exists
     required <- c("year")
     missing <- setdiff(required, colnames(df))

@@ -47,6 +47,7 @@
 #' ‘upland’ for upland classes \cr
 #' @export
 extract_landcover_values <- function(type, df, crs = NULL) {
+  check_lc_consent()
   #Checking input is data frame
   if (!is.data.frame(df)) {
     stop("Input must be a data frame containing columns: 'gridRef' and 'year'.")

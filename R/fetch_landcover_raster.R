@@ -44,6 +44,7 @@
 #' @return a list of rasters of specified region for specified time frame. Each raster is for one year and is at 1km resolution, with layers corresponding to land cover classes.
 #' @export
 fetch_landcover_raster <- function(reg, startyear, endyear) {
+  check_lc_consent()
   baseUrl <- "https://zenodo.org/records/14849882/files/"
 
   # Validate region input
