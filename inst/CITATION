@@ -1,0 +1,25 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "'ukbioprepr': an R package to support reproducible preparation of environmental data for biodiversity modelling in the UK",
+  author   = c(
+    person("Charlotte Rose", "Rush"),
+    person("Joseph", "Cooper"),
+    person("Cecilia", "Larrosa"),
+    person("Martin", "Wilkes")
+  ),
+  journal  = "Ecography",
+  year     = "2026",
+  volume   = "2026",
+  pages    = "e08413",
+  doi      = "10.1002/ecog.08413",
+  textVersion = paste(
+    "Rush, C. R., Cooper, J., Larrosa, C. and Wilkes, M. (2026).",
+    "'ukbioprepr': an R package to support reproducible preparation",
+    "of environmental data for biodiversity modelling in the UK.",
+    "Ecography 2026: e08413. https://doi.org/10.1002/ecog.08413",
+    "Please also cite the original data sources including",
+    "UKCEH land cover source datasets for each year used. Full citation details",
+    "are available at:",
+    "https://github.com/crrush7/ukbioprepr/blob/main/CITATIONS.md"
+  )
+)
