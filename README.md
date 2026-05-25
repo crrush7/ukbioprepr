@@ -1,62 +1,58 @@
 <img src="man/figures/ukbiopreprlogobg.png" width="214"/>
-
 # ukbioprepr
-
+ 
 <!-- badges: start -->
 [![codecov](https://codecov.io/github/crrush7/ukbioprepr/branch/main/graph/badge.svg?token=RMFJRR4YY2)](https://codecov.io/github/crrush7/ukbioprepr)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
-
+ 
 **An R package to support reproducible preparation of environmental data for biodiversity modelling in the UK**
-
+ 
 `ukbioprepr` is an R package designed to streamline the process of preparing environmental predictor variables for biodiversity modelling. It supports extractions using grid references and coordinates across the UK and Northern Ireland, and provides easy access to curated data products covering soil properties, land cover and climate variables. Both land cover and climate data are available from the years 2000 to 2023. Data products can be downloaded in raster format at a 1 km resolution for the entirety of the UK in British National Grid (EPSG:27700) or for Northern Ireland alone in Irish Grid (EPSG:29903).
-
-**Note:** Land cover data products are temporarily unavailable pending updates to the data repository. 
-Climate and soil functions are unaffected.
-
+ 
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Installation
-
+ 
 Install the development version from GitHub:
-
+ 
 ```r
 # install.packages("remotes")
 remotes::install_github("crrush7/ukbioprepr")
 ```
-
+ 
 Once installed, load the package:
-
+ 
 ```r
 library(ukbioprepr)
 ```
-
+ 
 ------------------------------------------------------------------------
+ 
 ## Data Licensing
-
-All derived data products are available under original licesning agreements:
-
-Soil data derived from SoilGrids is available under [CC-BY 4.0.](https://creativecommons.org/licenses/by/4.0/deed.en)
-
-Climate data products are derived from Met Office's HadUK-Grid and are available under [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
-The land cover data products are derived from the UKCEH Land Cover Maps and are subject to UKCEH licence terms: [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
-**Use of these data products is restricted to non-commercial applications only.**
-
-Users of data through ukbioprepr must:
+ 
+All derived data products are available under their original licensing agreements:
+ 
+- **Soil data** derived from SoilGrids is available under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en)
+- **Climate data** derived from Met Office HadUK-Grid is available under [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+- **Land cover data** derived from UKCEH Land Cover Maps is available under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.en) — **use is restricted to non-commercial applications only**
+Users of data through `ukbioprepr` must:
 - Cite the package in any publications
-- Acknowledge and cite original sources in any publications
-- Ensure any onward sharing of derived outputs complies with original license agreements
-
+- Acknowledge and cite the original data sources in any publications
+- Ensure any onward sharing of derived outputs complies with the original licensing agreements
+Full citation details for all data sources are available in [CITATIONS.md](CITATIONS.md).
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Data Product Information
-
+ 
 The `ukbioprepr` package provides access to several classes of data products. All data products are available at 1 km resolution. 
-
+ 
 ### Soil Properties
-
+ 
 All soil properties are available at a range of depths: 0-5 cm, 5-15 cm, 15-30 cm, 30-60 cm, 60-100 cm, 100-200 cm, except for Organic Carbon Stocks (ocs) which is available only at 0-3 cm depth. Soil property codes correspond to names of properties in either raster layers or outputted data frames. 
-
+ 
 | Code     | Description                                    |
 |----------|------------------------------------------------|
 | ocd      | Organic carbon density (kg m⁻³)                |
@@ -73,32 +69,30 @@ All soil properties are available at a range of depths: 0-5 cm, 5-15 cm, 15-30 c
 | phh2o    | Soil pH                                        |
 | soc      | Soil organic carbon in fine earth (g kg⁻¹)     |
 | ocs      | Organic carbon stocks (kg m⁻²)                 |
-
+ 
 **Data Source:** Soil property data products are derived from [SoilGrids](https://soilgrids.org)
-
+ 
 ### Climate Variables
-
+ 
 Available climate variables: 
 - **Mean Temperature** (`tas`) 
 - **Maximum Temperature** (`tasmax`) 
 - **Minimum Temperature** (`tasmin`) 
 - **Precipitation** (`rain`) 
-
 Available time periods: 
 - Monthly 
 - Seasonal 
 - Annual
-
 **Coverage:** 1999-2023
-
+ 
 **Data Source:** Climate variable data products are derived from the [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets)
-
+ 
 ### Land Cover
-### *Currently unavailable - updates coming
+ 
 There are two sets of land cover data products: 2000-2023 and 2015-2023. The latter contain more detailed classes whilst the former has some aggregated classes due to changes in classification in original data sources. Land cover codes correspond to names of cover classes in either raster layers or outputted data frames.
-
+ 
 #### 2015-2023 Land Cover Classes
-
+ 
 | Code | Description            |
 |------|------------------------|
 | blw  | Broad-leaved woodland  |
@@ -122,9 +116,9 @@ There are two sets of land cover data products: 2000-2023 and 2015-2023. The lat
 | sm   | Saltmarsh              |
 | urb  | Urban                  |
 | sub  | Suburban               |
-
+ 
 #### 2000-2023 Land Cover Classes
-
+ 
 | Code     | Description            |
 |----------|------------------------|
 | blw      | Broad-leaved woodland  |
@@ -142,19 +136,17 @@ There are two sets of land cover data products: 2000-2023 and 2015-2023. The lat
 | urb      | Urban                  |
 | sub      | Suburban               |
 | upland   | Aggregated Upland      |
-
+ 
 **Data Format:** Land cover data products are percentage cover
-
-**Data Source:** Derived from the [UK Centre for Ecology and Hydrology (UKCEH) Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps). 
-These data products are subject to UKCEH licence terms and are available for **non-commercial use only**. Users must acknowledge UKCEH and the 
-original datasets in any publications or reports.
-
+ 
+**Data Source:** Derived from the [UK Centre for Ecology and Hydrology (UKCEH) Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps) via the Environmental Information Data Centre (EIDC). These data products are subject to UKCEH licence terms and are available for **non-commercial use only**. Users must acknowledge UKCEH and cite the original source datasets for each year used in any publications or reports. Individual dataset DOIs are listed in [CITATIONS.md](CITATIONS.md).
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Example Usage
-
+ 
 ### Fetch Climate Rasters
-
+ 
 ```r
 library(ukbioprepr) 
 library(terra)
@@ -162,8 +154,8 @@ library(tidyterra)
 library(ggplot2)
 library(sf)
 library(dplyr)
-
-
+ 
+ 
 #Download a raster of seasonal average temperatures in Northern Ireland 
 #between 2010-2013
 ni_seasonal_tas_raster <- fetch_climate_raster(
@@ -174,7 +166,7 @@ ni_seasonal_tas_raster <- fetch_climate_raster(
   time = 'seasonal', 
   agg = 'mean'
 )
-
+ 
 correct_order <- c(
   "clim_winter_2010-2011",
   "clim_spring_2011",
@@ -189,10 +181,10 @@ correct_order <- c(
   "clim_summer_2013",
   "clim_autumn_2013"
 )
-
+ 
 #Reorder the raster layers
 ni_seasonal_tas_raster <- ni_seasonal_tas_raster[[correct_order]]
-
+ 
 #Now plot
 seasonal_plot <- ggplot() +
   geom_spatraster(data = ni_seasonal_tas_raster) +
@@ -215,7 +207,7 @@ seasonal_plot <- ggplot() +
     y = "Northing (m)"
   )
 seasonal_plot
-
+ 
 #Download a raster of total annual precipitation in the United Kingdom 
 #between 2005-2016 where annual calculations run from March to February 
 #of the following year
@@ -229,13 +221,13 @@ uk_annual_rain_raster <- fetch_climate_raster(
 )
 #Convert to dataframe
 precip_df <- as.data.frame(uk_annual_rain_raster, xy = TRUE)
-
+ 
 #Reshape to long format
 precip_long <- precip_df %>%
   pivot_longer(cols = -c(x, y), 
                names_to = "layer", 
                values_to = "precipitation")
-
+ 
 #Plot
 precip_plot <- ggplot(precip_long, aes(x = x, y = y, fill = precipitation)) +
   geom_raster() +
@@ -256,23 +248,25 @@ precip_plot <- ggplot(precip_long, aes(x = x, y = y, fill = precipitation)) +
     x = "Easting (m)",
     y = "Northing (m)"
   )
-
+ 
 precip_plot
 ```
+ 
 ### Fetch Soil Rasters
+ 
 ```r
 #fetching raster on pH at range of depths
 uk_soil <- fetch_soil_raster('uk', prop = 'phh2o')
 #Convert to dataframe
 soil_df <- as.data.frame(uk_soil, xy = TRUE)
-
+ 
 #Reshape to long format
 soil_long <- soil_df %>%
   pivot_longer(cols = -c(x, y), 
                names_to = "layer", 
                values_to = "pH") %>%
   mutate(layer = factor(layer, levels = names(uk_soil)))
-
+ 
 #Plot
 ph_plot <- ggplot(soil_long, aes(x = x, y = y, fill = pH)) +
   geom_raster() +
@@ -294,23 +288,25 @@ ph_plot <- ggplot(soil_long, aes(x = x, y = y, fill = pH)) +
     y = "Northing (m)"
   )
 ph_plot
-```### Extract Soil Values
-
+```
+ 
+### Extract Soil Values
+ 
 ```r
 # Extract values for selected soil properties using grid references 
 # in both Irish and British grid
 gridRef <- c('J3480', 'NT1565', 'SS9782', 'TQ2879', 'NW230721')
 soildf <- as.data.frame(gridRef)
-
+ 
 soilres <- extract_soil_values(
   type = 'grid', 
   df = soildf, 
   prop = c('nitrogen', 'phh2o', 'sand')
 )
 ```
-
+ 
 ### Extract Land Cover Values
-
+ 
 ```r
 # Extract values for land cover using coordinates in British National Grid 
 X <- c(315000)
@@ -318,16 +314,16 @@ Y <- c(665000)
 lcdf <- as.data.frame(X)
 lcdf$Y <- Y
 lcdf$year <- 2020
-
+ 
 lcres <- extract_landcover_values(
   type = 'coords', 
   df = lcdf, 
   crs = 'EPSG:27700'
 )
 ```
-
+ 
 ### Extract All Environmental Variables
-
+ 
 ```r
 # Extract values for soil properties, land cover and climate variables 
 # using longitude and latitude coordinates 
@@ -337,7 +333,7 @@ alldf <- as.data.frame(X)
 alldf$Y <- Y
 alldf$year <- c(2020, 2021, 2022, 2020)
 alldf$month <- c(4, 4, 5, 6)
-
+ 
 allres <- extract_all_values(
   type = 'coords',
   crs = 'EPSG:4326',
@@ -351,11 +347,11 @@ allres <- extract_all_values(
   annualstartmonth = 1
 )
 ```
-
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Main Functions
-
+ 
 - `fetch_climate_raster()` - Download climate NetCDF rasters
 - `fetch_soil_raster()` - Download soil raster files  
 - `fetch_landcover_raster()` - Download land cover rasters
@@ -363,18 +359,17 @@ allres <- extract_all_values(
 - `extract_soil_values()` - Extract soil properties for specific locations
 - `extract_landcover_values()` - Extract land cover for specific locations/years
 - `extract_all_values()` - Batch extraction of all environmental variables
-
 For detailed documentation on any function:
-
+ 
 ```r
 ?extract_climate_values
 ?extract_all_values
 ```
-
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Features
-
+ 
 - 🌍 **Flexible input formats**: Works with grid references (Irish/British) or coordinates (any CRS)
 - 📊 **Multiple data types**: Climate, soil, and land cover in one package
 - ⏱️ **Temporal flexibility**: Monthly, seasonal, and annual climate aggregations
@@ -382,81 +377,72 @@ For detailed documentation on any function:
 - 🎯 **Batch processing**: Extract all variables in a single function call
 - ✅ **Reproducible**: Consistent data sources and processing methods
 - 📏 **High resolution**: All data at 1 km resolution
-
 ------------------------------------------------------------------------
-
+ 
 ## Package Quality
-
+ 
 - **Test Coverage:** 86.87% with 584+ comprehensive tests
 - **Documentation:** Complete roxygen2 documentation for all functions
-
 ------------------------------------------------------------------------
-
+ 
 ## Version History
-
+ 
 See [news.md](news.md) for version history and changes.
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Citation
-
-
+ 
 If you use `ukbioprepr` in your research, please cite:
-
-Rush, C. R., Cooper, J., Larrosa, C. and Wilkes, M. 2026. 'ukbioprepr': an R package to support reproducible preparation of environmental data 
-for biodiversity modelling in the UK. Ecography 2026: e08413. https://doi.org/10.1002/ecog.08413
-
-Please also cite original data providers.
-
-
+ 
+Rush, C. R., Cooper, J., Larrosa, C. and Wilkes, M. 2026. 'ukbioprepr': an R package to support reproducible preparation of environmental data for biodiversity modelling in the UK. *Ecography* 2026: e08413. https://doi.org/10.1002/ecog.08413
+ 
+Please also cite the relevant source datasets. Full citation details for all data sources are available in [CITATIONS.md](CITATIONS.md).
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Contributing
-
+ 
 Contributions are welcome! 
-
+ 
 - **Bug reports:** Use our [bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
 - **Feature requests:** Use our [feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
-
 ------------------------------------------------------------------------
-
+ 
 ## Issues and Support
-
+ 
 If you encounter any issues or have questions:
-
+ 
 - **Bug reports:** Please open an issue on our [GitHub Issues page](https://github.com/crrush7/ukbioprepr/issues) using the bug report template
 - **Feature requests:** Use the feature request template in Issues
 - **Questions:** Open a discussion or contact the maintainer
-
 When reporting bugs, please include:
 - A minimal reproducible example
 - Your R version and operating system
 - Expected vs actual behavior
 - Output from `sessionInfo()`
-
 ------------------------------------------------------------------------
-
+ 
 ## License
-
-GPL-3 for the package
-Data products are under different llicenses as described above.
-
+ 
+GPL-3 for the package. Data products are under different licenses as described in the [Data Licensing](#data-licensing) section above.
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Acknowledgments
-
+ 
 This package integrates derived data products from several important sources:
+ 
+- **Soil data:** [SoilGrids](https://soilgrids.org) — available under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en)
+- **Climate data:** [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets) — available under [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+- **Land cover data:** [UK Centre for Ecology and Hydrology (UKCEH) Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps) — available for non-commercial use under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
 
-- **Soil data:** [SoilGrids](https://soilgrids.org) — available under CC-BY 4.0
-- **Climate data:** [Met Office HadUK-Grid](https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets) — available under Open Government Licence
-- **Land cover data:** [UK Centre for Ecology and Hydrology (UKCEH) Land Cover Maps](https://www.ceh.ac.uk/data/ukceh-land-cover-maps) — available for non-commercial use under UKCEH licence terms
-
-We thank these organisations for making their data available.
-Users are required to cite original data sources in any publications. 
-
+We thank these organisations for making their data available. Users are required to cite original data sources in any publications. See [CITATIONS.md](CITATIONS.md) for full citation details.
+ 
 ------------------------------------------------------------------------
-
+ 
 ## Contact
-
+ 
 Charlotte R. Rush - cr23569@essex.ac.uk
-
+ 
 Project Link: [https://github.com/crrush7/ukbioprepr](https://github.com/crrush7/ukbioprepr)
