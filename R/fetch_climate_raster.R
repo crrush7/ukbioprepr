@@ -103,10 +103,10 @@ fetch_climate_raster <- function(reg, cv, start, end, time=NULL, agg=NULL) {
     stop("'start' date must be earlier than or equal to 'end' date.")
   }
   #Check range
-  min_date <- as.Date("2000_01_01", format = "%Y_%m_%d")
+  min_date <- as.Date("1999_01_01", format = "%Y_%m_%d")
   max_date <- as.Date("2023_12_01", format = "%Y_%m_%d")
   if (start_date < min_date || end_date > max_date) {
-    stop("Dates must be between '2000_01' and '2023_12'.")
+    stop("Dates must be between '1999_01' and '2023_12'.")
   }
 
  dlClimate <- function(reg, cv) {
