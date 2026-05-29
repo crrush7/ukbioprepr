@@ -244,17 +244,17 @@ test_that("fetch_climate_raster accepts equal start and end dates", {
   })
 })
 
-test_that("fetch_climate_raster stops when start date is before 1999_01", {
+test_that("fetch_climate_raster stops when start date is before 2000_01", {
   expect_error(
-    fetch_climate_raster("uk", "tas", "1999_12", "2020_01", time = "monthly"),
-    "Dates must be between '1999_01' and '2023_12'"
+    fetch_climate_raster("uk", "tas", "2000_12", "2020_01", time = "monthly"),
+    "Dates must be between '2000_01' and '2023_12'"
   )
 })
 
 test_that("fetch_climate_raster stops when end date is after 2023_12", {
   expect_error(
     fetch_climate_raster("uk", "tas", "2020_01", "2024_01", time = "monthly"),
-    "Dates must be between '1999_01' and '2023_12'"
+    "Dates must be between '2000_01' and '2023_12'"
   )
 })
 
@@ -262,9 +262,9 @@ test_that("fetch_climate_raster accepts boundary dates", {
   skip_if_not(is_online(), "No internet - skipping integration test")
   skip("Skipping slow download test - run manually if needed")
 
-  # Test 1999_01
+  # Test 2000_01
   expect_no_error({
-    res <- fetch_climate_raster("ni", "tas", "1999_01", "1999_01", time = "monthly")
+    res <- fetch_climate_raster("ni", "tas", "2000_01", "2000_01", time = "monthly")
   })
 
   # Test 2023_12
@@ -525,8 +525,8 @@ test_that("OFFLINE: date format validation works without network", {
 
 test_that("OFFLINE: date range validation works without network", {
   expect_error(
-    fetch_climate_raster("uk", "tas", "1999_12", "2020_01", time = "monthly"),
-    "between '1999_01' and '2023_12'"
+    fetch_climate_raster("uk", "tas", "2000_12", "2020_01", time = "monthly"),
+    "between '2000_01' and '2023_12'"
   )
 
   expect_error(
